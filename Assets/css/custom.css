@@ -1,0 +1,1671 @@
+/* AI Hardware Engineer Roadmap — MkDocs Material Custom Theme */
+
+:root {
+  /* text family is set once, further down, in the reading-typography block —
+     declaring it here too only created a dead override */
+  --md-code-font-family: "JetBrains Mono", "Cascadia Code", "Fira Code", monospace;
+  --aihpc-sticky-offset: 4.8rem;
+
+  /* hairline used for section rules and card edges, so every divider in the
+     theme derives from one value instead of a scatter of greys */
+  --aihpc-hairline: color-mix(in srgb, var(--md-default-fg-color) 12%, transparent);
+}
+
+/* ── Layout ───────────────────────────────────── */
+.md-grid {
+  max-width: 1440px;
+}
+
+.md-content__inner {
+  padding-top: 1.2rem;
+}
+
+/* ── Page title ────────────────────────────────
+   Left-aligned, so the title shares an edge with the prose underneath it.
+   Centring it read as a mistake next to left-aligned body copy, and cost a
+   whole extra line of height on the many two-line lecture titles. */
+.md-content__inner > h1:first-of-type,
+.md-typeset h1 {
+  font-size: 1.85rem !important;
+  font-weight: 750;
+  letter-spacing: -0.032em;
+  text-align: left;
+  text-wrap: balance;
+  margin-top: 0.1rem;
+  margin-bottom: 1.1rem;
+  line-height: 1.14;
+}
+
+/* Content paragraphs — always left-aligned */
+.md-content__inner > p {
+  text-align: left;
+}
+
+/* Prevent long inline content in prose from overflowing on narrow screens.
+   `anywhere` was breaking ordinary words mid-letter ("Foundation s") whenever
+   a column got tight; `break-word` only splits a token that cannot fit. */
+.md-typeset p,
+.md-typeset li,
+.md-typeset td,
+.md-typeset blockquote {
+  overflow-wrap: break-word;
+  word-break: normal;
+}
+
+/* Standalone bold label lines (e.g. "You will learn to:").
+   Previously these were shrunk, greyed, and UPPERCASED — which made a label
+   quieter than the text it introduces, and turned any fully-bold pull-quote
+   into a wall of capitals. Now it reads as emphasis at full contrast, and
+   blockquotes/admonitions opt out because a bold line there is a statement,
+   not a label. */
+.md-typeset p > strong:only-child {
+  display: inline-block;
+  font-weight: 680;
+  letter-spacing: -0.005em;
+  color: var(--md-default-fg-color);
+}
+
+.md-typeset blockquote p > strong:only-child,
+.md-typeset .admonition p > strong:only-child {
+  display: inline;
+  font-weight: 650;
+}
+
+/* Banner image */
+.md-content__inner > p > img[alt="AI Hardware Engineer Roadmap"] {
+  display: block;
+  margin: 0 auto 0.5rem;
+  width: min(920px, 100%);
+  max-width: 100%;
+  border-radius: 18px;
+  box-shadow: 0 10px 34px rgba(2, 8, 23, 0.18);
+}
+
+.md-typeset img[alt="AI Chip Stack Diagram"] {
+  display: block;
+  width: min(860px, 100%);
+  height: auto;
+  max-width: 100%;
+  margin: 1.2rem auto 1rem;
+  border-radius: 18px;
+  box-shadow: 0 10px 30px rgba(2, 8, 23, 0.16);
+}
+
+/* ── Horizontal rule ──────────────────────────── */
+.md-typeset hr {
+  border-color: var(--md-typeset-table-color);
+  margin: 1.8rem 0;
+}
+
+/* ── Headings ─────────────────────────────────── */
+/* A hairline rather than a 2px brand-coloured bar: the old rule fired on every
+   H2 and, next to the `---` separators these documents use heavily, produced
+   two competing dividers per section. */
+.md-typeset h2 {
+  font-weight: 700;
+  letter-spacing: -0.018em;
+  border-bottom: 1px solid var(--aihpc-hairline);
+  padding-bottom: 0.45rem;
+  margin-top: 2rem;
+  margin-bottom: 1rem;
+}
+
+.md-typeset h3 {
+  font-weight: 640;
+  letter-spacing: -0.014em;
+  margin-top: 1.6rem;
+}
+
+/* H4 was uppercase, brand-coloured, and 0.78rem — smaller than the 0.83rem
+   body text it introduced, so a heading read as a caption. Now it sits above
+   body size and stays in the text colour. */
+.md-typeset h4 {
+  font-weight: 660;
+  font-size: 0.9rem;
+  letter-spacing: -0.008em;
+  color: var(--md-default-fg-color);
+  margin-top: 1.5rem;
+  margin-bottom: 0.4rem;
+}
+
+.md-typeset h1,
+.md-typeset h2,
+.md-typeset h3,
+.md-typeset h4,
+.md-typeset h5,
+.md-typeset h6 {
+  scroll-margin-top: calc(var(--aihpc-sticky-offset) + 0.8rem);
+}
+
+/* ── Tables ───────────────────────────────────── */
+.md-typeset table:not([class]) {
+  font-size: 0.875rem;
+  border-collapse: separate;
+  border-spacing: 0;
+  border: 1px solid var(--md-typeset-table-color);
+  border-radius: 8px;
+  overflow: hidden;
+  width: 100%;
+  margin: 1.2rem 0;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+}
+
+.md-typeset table:not([class]) th {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background: var(--md-typeset-table-color);
+  border-bottom: 2px solid var(--md-primary-fg-color);
+  padding: 0.6rem 0.85rem;
+  white-space: normal;
+}
+
+.md-typeset table:not([class]) td {
+  padding: 0.5rem 0.85rem;
+  border-top: 1px solid var(--md-typeset-table-color);
+  vertical-align: top;
+  line-height: 1.55;
+}
+
+.md-typeset table:not([class]) tr:first-child td {
+  border-top: none;
+}
+
+.md-typeset table:not([class]) tr:hover td {
+  background: var(--md-accent-fg-color--transparent);
+}
+
+/* Soften bold inside table cells — keep emphasis but reduce visual weight */
+.md-typeset table:not([class]) td strong,
+.md-typeset table:not([class]) td:first-child {
+  font-weight: 500;
+}
+
+/* ── Code blocks ──────────────────────────────── */
+.md-typeset code {
+  font-size: 0.82em;
+  padding: 0.1em 0.35em;
+  border-radius: 4px;
+}
+
+.md-typeset pre {
+  border-radius: 8px;
+  overflow-x: auto;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.md-typeset pre code {
+  font-family: 'JetBrains Mono', 'Cascadia Code', 'Fira Code', monospace;
+  font-size: 0.8em;
+  line-height: 1.55;
+}
+
+/* ── Blockquotes as callouts ────────────────────
+   These carry the "steal this" / key-insight lines, so they were the one thing
+   on the page that must not be quieter than body copy. They were set at
+   0.75rem in a lightened grey — smaller and fainter than the 0.83rem prose
+   around them. Now they match body size at full contrast and lean on the
+   surface tint plus a soft accent rail to stand apart. */
+.md-typeset blockquote {
+  border-left: 3px solid var(--md-primary-fg-color);
+  background: var(--md-admonition-bg-color);
+  padding: 0.85rem 1.25rem 0.85rem 1.35rem;
+  border-radius: 0 10px 10px 0;
+  margin: 1.4rem 0;
+  font-size: 0.83rem;
+  color: var(--md-default-fg-color);
+}
+
+.md-typeset blockquote p {
+  margin-bottom: 0.3rem;
+}
+
+.md-typeset blockquote p:last-child {
+  margin-bottom: 0;
+}
+
+/* ── Course identity blocks ───────────────────── */
+.course-identity {
+  --course-accent: var(--md-primary-fg-color);
+  --course-accent-rgb: 63, 81, 181;
+  align-items: center;
+  background:
+    linear-gradient(135deg, rgba(var(--course-accent-rgb), 0.13), rgba(var(--course-accent-rgb), 0.035)),
+    var(--md-admonition-bg-color);
+  border: 1px solid rgba(var(--course-accent-rgb), 0.24);
+  border-left: 0.45rem solid var(--course-accent);
+  border-radius: 10px;
+  box-shadow: 0 5px 18px rgba(15, 23, 42, 0.08);
+  display: grid;
+  gap: 0.9rem;
+  grid-template-columns: auto 1fr;
+  margin: 0.9rem 0 1.4rem;
+  padding: 0.85rem 1rem;
+}
+
+.course-identity__icon {
+  align-items: center;
+  background: rgba(var(--course-accent-rgb), 0.14);
+  border: 1px solid rgba(var(--course-accent-rgb), 0.24);
+  border-radius: 9px;
+  color: var(--course-accent);
+  display: inline-flex;
+  font-size: 0.72rem;
+  font-weight: 900;
+  height: 2.5rem;
+  justify-content: center;
+  letter-spacing: 0.02em;
+  width: 2.5rem;
+}
+
+.course-identity__icon .twemoji,
+.course-identity__icon svg {
+  height: 1.35rem;
+  width: 1.35rem;
+}
+
+.course-identity__eyebrow {
+  color: var(--course-accent);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  margin: 0 0 0.18rem !important;
+  text-transform: uppercase;
+}
+
+.course-identity__title {
+  color: var(--md-default-fg-color);
+  font-size: 0.92rem;
+  font-weight: 700;
+  line-height: 1.35;
+  margin: 0 0 0.25rem !important;
+}
+
+.course-identity__meta {
+  color: var(--md-default-fg-color--light);
+  font-size: 0.76rem;
+  line-height: 1.45;
+  margin: 0 !important;
+}
+
+.course-identity.digital-foundations { --course-accent: #4f46e5; --course-accent-rgb: 79, 70, 229; }
+.course-identity.digital-design { --course-accent: #7c3aed; --course-accent-rgb: 124, 58, 237; }
+.course-identity.computer-architecture { --course-accent: #2563eb; --course-accent-rgb: 37, 99, 235; }
+.course-identity.operating-systems { --course-accent: #0891b2; --course-accent-rgb: 8, 145, 178; }
+.course-identity.parallel-computing { --course-accent: #dc2626; --course-accent-rgb: 220, 38, 38; }
+.course-identity.embedded-systems { --course-accent: #059669; --course-accent-rgb: 5, 150, 105; }
+.course-identity.pcb-design { --course-accent: #ca8a04; --course-accent-rgb: 202, 138, 4; }
+.course-identity.embedded-software { --course-accent: #16a34a; --course-accent-rgb: 22, 163, 74; }
+.course-identity.embedded-linux { --course-accent: #0d9488; --course-accent-rgb: 13, 148, 136; }
+.course-identity.product-design { --course-accent: #ea580c; --course-accent-rgb: 234, 88, 12; }
+.course-identity.ai-workloads { --course-accent: #9333ea; --course-accent-rgb: 147, 51, 234; }
+.course-identity.neural-networks { --course-accent: #db2777; --course-accent-rgb: 219, 39, 119; }
+.course-identity.dl-frameworks { --course-accent: #f97316; --course-accent-rgb: 249, 115, 22; }
+.course-identity.fpga-track { --course-accent: #1d4ed8; --course-accent-rgb: 29, 78, 216; }
+.course-identity.zynq-mpsoc { --course-accent: #0369a1; --course-accent-rgb: 3, 105, 161; }
+.course-identity.advanced-fpga { --course-accent: #0f766e; --course-accent-rgb: 15, 118, 110; }
+.course-identity.hls { --course-accent: #b45309; --course-accent-rgb: 180, 83, 9; }
+.course-identity.fpga-runtime { --course-accent: #be123c; --course-accent-rgb: 190, 18, 60; }
+.course-identity.jetson-platform { --course-accent: #65a30d; --course-accent-rgb: 101, 163, 13; }
+.course-identity.carrier-board { --course-accent: #a16207; --course-accent-rgb: 161, 98, 7; }
+.course-identity.l4t { --course-accent: #0284c7; --course-accent-rgb: 2, 132, 199; }
+.course-identity.fsp { --course-accent: #4d7c0f; --course-accent-rgb: 77, 124, 15; }
+.course-identity.jetson-apps { --course-accent: #7e22ce; --course-accent-rgb: 126, 34, 206; }
+.course-identity.security-ota { --course-accent: #b91c1c; --course-accent-rgb: 185, 28, 28; }
+.course-identity.compliance { --course-accent: #475569; --course-accent-rgb: 71, 85, 105; }
+.course-identity.jetson-runtime { --course-accent: #c2410c; --course-accent-rgb: 194, 65, 12; }
+.course-identity.ml-compiler { --course-accent: #9333ea; --course-accent-rgb: 147, 51, 234; }
+.course-identity.dl-inference { --course-accent: #e11d48; --course-accent-rgb: 225, 29, 72; }
+.course-identity.specialization { --course-accent: #312e81; --course-accent-rgb: 49, 46, 129; }
+.course-identity.gpu-infra { --course-accent: #16a34a; --course-accent-rgb: 22, 163, 74; }
+.course-identity.hpc { --course-accent: #2563eb; --course-accent-rgb: 37, 99, 235; }
+.course-identity.edge-ai { --course-accent: #0891b2; --course-accent-rgb: 8, 145, 178; }
+.course-identity.robotics { --course-accent: #f59e0b; --course-accent-rgb: 245, 158, 11; }
+.course-identity.autonomous-vehicles { --course-accent: #dc2626; --course-accent-rgb: 220, 38, 38; }
+.course-identity.ai-chip-design { --course-accent: #7c2d12; --course-accent-rgb: 124, 45, 18; }
+.course-identity.mlsys { --course-accent: #0f766e; --course-accent-rgb: 15, 118, 110; }
+
+/* ── Admonitions ──────────────────────────────── */
+.md-typeset .admonition {
+  border-radius: 8px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+}
+
+/* ── Navigation tabs ──────────────────────────── */
+.md-tabs {
+  /* NOTE: no backdrop-filter here — a backdrop-filtered element clips its overflowing
+     children to its own box (Chrome/Safari), which hid the hover dropdown hanging below
+     the bar. Keep it off regardless of the background used.
+
+     The bar used to be a second saturated blue band under the header, stacking
+     ~90px of heavy chrome above every page. It is now a light surface rail: the
+     header stays branded, the tab row reads as part of the page, and the active
+     tab is marked by an accent underline instead of by colour weight. */
+  background: var(--md-default-bg-color);
+  border-bottom: 1px solid var(--aihpc-hairline);
+  box-shadow: none;
+  /* Material sets the bar's colour to the primary *background* (white) because it
+     expects a branded bar. Reset it here so every descendant inherits page text
+     instead of white-on-white — otherwise the active tab vanishes. */
+  color: var(--md-default-fg-color--light);
+  overflow: visible !important;   /* override Material's overflow:auto so hover dropdowns can hang below the bar */
+  position: relative;  /* + z-index makes the bar (and its dropdown) paint above page content */
+  z-index: 3;
+}
+
+/* the grid wrapper inside the bar must not clip the dropdown either */
+.md-tabs .md-grid {
+  contain: none !important;
+  overflow: visible !important;
+}
+
+.md-tabs__list {
+  contain: none !important;        /* Material sets contain:content — paint containment that CLIPS the dropdown regardless of overflow. THIS was the real blocker. */
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 1rem;
+  overflow: visible !important;    /* Material also sets overflow:auto — override both so the panel can escape the bar */
+  padding: 0.18rem 0 0.08rem;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.md-tabs__list::-webkit-scrollbar {
+  display: none;
+}
+
+/* ── Tab dropdown menus ───────────────────────── */
+.md-tabs__item--has-dropdown {
+  position: relative;
+}
+
+.md-tabs__caret {
+  display: inline-block;
+  height: 0.55em;
+  margin-left: 0.3em;
+  transition: transform 0.18s ease;
+  vertical-align: 0.05em;
+  width: 0.55em;
+}
+
+.md-tabs__item--has-dropdown:hover .md-tabs__caret {
+  transform: rotate(180deg);
+}
+
+.md-tabs__dropdown {
+  background: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 12px;
+  box-shadow: 0 10px 36px rgba(0, 0, 0, 0.13), 0 3px 10px rgba(0, 0, 0, 0.08);
+  left: 0;
+  list-style: none;
+  margin: 0;
+  min-width: 220px;
+  opacity: 0;
+  padding: 0.4rem 0;
+  pointer-events: none;
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  transform: translateY(-8px);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  z-index: 500;
+}
+
+/* transparent bridge over the 0.5rem gap so moving the cursor to the panel doesn't drop hover */
+.md-tabs__dropdown::after {
+  content: "";
+  height: 0.7rem;
+  left: 0;
+  position: absolute;
+  right: 0;
+  top: -0.7rem;
+}
+
+.md-tabs__dropdown::before {
+  background: #fff;
+  border-left: 1px solid rgba(0, 0, 0, 0.08);
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+  content: "";
+  height: 10px;
+  left: 1.7rem;
+  position: absolute;
+  top: -6px;
+  transform: rotate(45deg);
+  width: 10px;
+}
+
+.md-tabs__item--has-dropdown:hover .md-tabs__dropdown {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+
+.md-tabs__dropdown li {
+  list-style: none;
+}
+
+.md-tabs__dropdown-link {
+  border-radius: 6px;
+  color: #1a1a2e !important;
+  display: block;
+  font-size: 0.79rem;
+  font-weight: 500;
+  line-height: 1.3;
+  margin: 0 0.4rem;
+  padding: 0.52rem 0.85rem;
+  text-decoration: none !important;
+  transition: background 0.13s ease, color 0.13s ease;
+  white-space: nowrap;
+}
+
+.md-tabs__dropdown-link:hover {
+  background: rgba(48, 63, 161, 0.08);
+  color: #303fa1 !important;
+  font-weight: 600;
+}
+
+[data-md-color-scheme="slate"] .md-tabs__dropdown {
+  background: #1a2234;
+  border-color: rgba(148, 163, 184, 0.14);
+  box-shadow: 0 10px 36px rgba(0, 0, 0, 0.45), 0 3px 10px rgba(0, 0, 0, 0.25);
+}
+
+[data-md-color-scheme="slate"] .md-tabs__dropdown::before {
+  background: #1a2234;
+  border-color: rgba(148, 163, 184, 0.14);
+}
+
+[data-md-color-scheme="slate"] .md-tabs__dropdown-link {
+  color: rgba(203, 213, 225, 0.88) !important;
+}
+
+[data-md-color-scheme="slate"] .md-tabs__dropdown-link:hover {
+  background: rgba(59, 130, 246, 0.12);
+  color: #60a5fa !important;
+}
+
+.md-tabs__item {
+  height: auto;
+  flex: 0 0 auto;
+}
+
+.md-tabs__link {
+  background: transparent;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  color: var(--md-default-fg-color--light);
+  font-size: 0.74rem;
+  font-weight: 620;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+  margin-top: 0;
+  max-width: none;
+  opacity: 1;
+  overflow: visible;
+  padding: 0.55rem 0.12rem 0.45rem;
+  text-overflow: clip;
+  transition: border-color 0.18s ease, color 0.18s ease;
+  white-space: nowrap;
+}
+
+.md-tabs__link:hover {
+  background: transparent;
+  border-bottom-color: var(--aihpc-hairline);
+  color: var(--md-default-fg-color);
+  opacity: 1;
+  transform: none;
+}
+
+.md-tabs__link--active {
+  background: transparent;
+  border-bottom-color: var(--md-primary-fg-color);
+  box-shadow: none;
+  color: var(--md-default-fg-color);
+  font-weight: 720;
+  opacity: 1;
+}
+
+/* ── Sidebar nav ──────────────────────────────── */
+.md-nav__title {
+  font-weight: 700;
+}
+
+.md-nav__link {
+  font-size: 0.74rem;
+}
+
+@keyframes sidebar-enter {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@media screen and (min-width: 960px) {
+  .md-sidebar--primary {
+    width: 16.2rem;
+  }
+
+  .md-sidebar--secondary {
+    width: 13rem;
+  }
+
+  .md-sidebar--primary .md-sidebar__inner,
+  .md-sidebar--secondary .md-sidebar__inner {
+    animation: sidebar-enter 0.32s ease;
+  }
+
+  .md-sidebar__scrollwrap {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(46, 144, 250, 0.45) transparent;
+  }
+
+  .md-sidebar__scrollwrap::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  .md-sidebar__scrollwrap::-webkit-scrollbar-thumb {
+    background: rgba(46, 144, 250, 0.35);
+    border-radius: 999px;
+  }
+
+  .md-sidebar--primary .md-nav--primary {
+    background: transparent;
+    border: 0;
+    box-shadow: none;
+    padding: 0;
+  }
+
+  .md-sidebar--primary .md-nav__title,
+  .md-sidebar--primary .md-nav__source {
+    border-radius: 0;
+  }
+
+  .md-sidebar--primary .md-nav__title {
+    background: transparent;
+    border: 0;
+    border-bottom: 1px solid rgba(53, 80, 125, 0.14);
+    color: var(--md-default-fg-color--light);
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    margin-bottom: 0.5rem;
+    padding: 0 0 0.5rem;
+    text-transform: uppercase;
+  }
+
+  .md-sidebar--primary .md-nav__source {
+    background: transparent;
+    border: 0;
+    border-bottom: 1px solid rgba(53, 80, 125, 0.1);
+    margin-bottom: 0.5rem;
+    overflow: hidden;
+    padding-bottom: 0.5rem;
+  }
+
+  .md-sidebar--primary .md-nav__list {
+    gap: 0.02rem;
+  }
+
+  .md-sidebar--primary .md-nav__item {
+    margin: 0.01rem 0;
+  }
+
+  .md-sidebar--primary .md-nav--primary > .md-nav__list > .md-nav__item {
+    margin-top: 0.3rem;
+  }
+
+  .md-sidebar--primary .md-nav--primary > .md-nav__list > .md-nav__item > .md-nav__link {
+    color: var(--md-default-fg-color);
+    font-size: 0.76rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    margin-bottom: 0.08rem;
+  }
+
+  .md-sidebar--primary .md-nav__link {
+    border-radius: 0;
+    font-size: 0.72rem;
+    line-height: 1.32;
+    padding: 0.18rem 0.1rem 0.18rem 0.82rem;
+    transition: color 0.18s ease, transform 0.18s ease;
+  }
+
+  .md-sidebar--primary .md-nav__link:hover {
+    background: transparent;
+    color: var(--md-primary-fg-color);
+    transform: translateX(1px);
+  }
+
+  .md-sidebar--primary .md-nav__link--active {
+    background: transparent;
+    box-shadow: inset 2px 0 0 var(--md-primary-fg-color);
+    color: var(--md-primary-fg-color);
+    font-weight: 700;
+  }
+
+  .md-sidebar--primary .md-nav .md-nav {
+    border-left: 1px solid rgba(53, 80, 125, 0.1);
+    margin-left: 0.28rem;
+    padding-left: 0.22rem;
+  }
+
+  .md-sidebar--primary .md-nav .md-nav .md-nav__link {
+    font-size: 0.71rem;
+    padding-left: 0.68rem;
+  }
+
+  .md-sidebar--secondary .md-nav--secondary {
+    background: transparent;
+    border: 0;
+    box-shadow: none;
+    max-height: none;
+    overflow: visible;
+    padding: 0;
+  }
+
+  .md-sidebar--secondary .md-nav__title {
+    background: var(--md-default-bg-color);
+    border: 0;
+    border-bottom: 1px solid rgba(53, 80, 125, 0.14);
+    color: var(--md-default-fg-color--light);
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    margin-bottom: 0.5rem;
+    padding: 0 0 0.5rem;
+    position: sticky;
+    top: 0;
+    text-transform: uppercase;
+    z-index: 1;
+  }
+
+  .md-sidebar--secondary .md-nav__list {
+    gap: 0.02rem;
+  }
+
+  .md-sidebar--secondary .md-sidebar__scrollwrap,
+  .md-sidebar--secondary .md-sidebar__inner,
+  .md-sidebar--secondary .md-nav--secondary {
+    background: var(--md-default-bg-color);
+  }
+
+  .md-sidebar--secondary .md-sidebar__inner {
+    border-left: 1px solid rgba(53, 80, 125, 0.1);
+    padding-left: 0.85rem;
+  }
+
+  .md-sidebar--secondary .md-nav__link {
+    border-left: 2px solid transparent;
+    font-size: 0.72rem;
+    line-height: 1.34;
+    margin-left: 0;
+    padding: 0.16rem 0 0.16rem 0.72rem;
+  }
+
+  .md-sidebar--secondary .md-nav__link:hover {
+    background: transparent;
+    color: var(--md-primary-fg-color);
+  }
+
+  .md-sidebar--secondary .md-nav__link--active {
+    background: transparent;
+    border-left-color: var(--md-primary-fg-color);
+    color: var(--md-primary-fg-color);
+    font-weight: 700;
+  }
+
+  .md-sidebar--secondary .md-nav .md-nav {
+    border-left: 1px solid rgba(53, 80, 125, 0.08);
+    margin-left: 0.3rem;
+    padding-left: 0.18rem;
+  }
+
+  .md-sidebar--secondary .md-nav .md-nav__link {
+    font-size: 0.69rem;
+  }
+}
+
+/* ── Sidebar height: keep each sidebar inside the viewport ─────────────
+   At the desktop (sticky) breakpoint, cap the left nav and right TOC scroll
+   area to the viewport so a long nav / TOC scrolls internally and can never
+   spill down over the footer. */
+@media screen and (min-width: 76.25em) {
+  .md-sidebar {
+    height: auto;                 /* contribute real height; never collapse to 0 */
+  }
+
+  .md-sidebar__scrollwrap {
+    max-height: calc(100vh - var(--aihpc-sticky-offset) - 2rem);
+    overflow-y: auto;
+  }
+}
+
+/* ── Header ───────────────────────────────────── */
+.md-header {
+  background: linear-gradient(180deg, #4051b5, #3a4aa5);
+  box-shadow: 0 1px 8px rgba(0,0,0,0.12);
+}
+
+.md-header__title {
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+/* ── Logo ─────────────────────────────────────── */
+.md-header__button.md-logo img,
+.md-header__button.md-logo svg {
+  fill: currentcolor;
+  display: block !important;
+  height: 2.4rem !important;
+  width: auto !important;
+  border-radius: 6px !important;
+}
+
+/* ── Footer ───────────────────────────────────── */
+.md-footer-meta a {
+  color: var(--md-accent-fg-color);
+}
+
+/* ── Mermaid diagrams ─────────────────────────── */
+.mermaid {
+  text-align: center;
+  margin: 1.5rem 0;
+}
+
+/* ── Tag chips ────────────────────────────────── */
+.md-tag {
+  border-radius: 4px;
+  font-weight: 600;
+  font-size: 0.7rem;
+  letter-spacing: 0.03em;
+}
+
+/* ── Search ───────────────────────────────────── */
+.md-search__form {
+  border-radius: 6px;
+  background: var(--md-default-bg-color);
+  border: 1px solid rgba(59, 130, 246, 0.14);
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.08);
+}
+
+.md-search__icon::before,
+.md-search__icon::after,
+.md-search__suggest::before,
+.md-search__suggest::after,
+.md-search-result__icon::before,
+.md-search-result__icon::after {
+  box-sizing: inherit !important;
+}
+
+.md-search__input {
+  border-radius: 8px;
+  color: var(--md-default-fg-color);
+  font-size: 0.78rem;
+  line-height: 1.3;
+  position: relative;
+  z-index: 1;
+}
+
+.md-search__input::placeholder {
+  color: var(--md-default-fg-color--light);
+  font-size: 0.72rem;
+  opacity: 0.8;
+}
+
+.md-search__output {
+  border-radius: 14px;
+  box-shadow: 0 20px 50px rgba(15, 23, 42, 0.18);
+  border: 1px solid rgba(59, 130, 246, 0.12);
+  overflow: hidden;
+}
+
+.md-search-result__meta {
+  background: rgba(37, 99, 235, 0.06);
+  border-bottom: 1px solid rgba(59, 130, 246, 0.12);
+  color: var(--md-default-fg-color--light);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  padding: 0.75rem 0.9rem;
+}
+
+.md-search-result__item {
+  border-radius: 10px;
+  margin: 0.18rem 0;
+  overflow: hidden;
+}
+
+.md-search-result__link {
+  border-radius: 10px;
+  padding: 0.78rem 0.9rem;
+  transition: background-color 0.18s ease, transform 0.18s ease;
+}
+
+.md-search-result__link:hover,
+.md-search-result__link:focus {
+  background: rgba(59, 130, 246, 0.07);
+  transform: none;
+}
+
+.md-search-result__title {
+  font-size: 0.5rem;
+  font-weight: 700;
+  line-height: 1.35;
+  letter-spacing: normal;
+}
+
+.md-search-result__teaser {
+  color: var(--md-default-fg-color--light);
+  font-size: 0.74rem;
+  line-height: 1.5;
+  margin-top: 0.14rem;
+}
+
+.md-search-result mark {
+  background: rgba(59, 130, 246, 0.16);
+  color: inherit;
+  border-radius: 4px;
+  padding: 0 0.14em;
+}
+
+.md-search-result__more {
+  padding: 0.55rem 0.9rem 0.45rem;
+}
+
+.md-search-result__teaser:empty {
+  display: none;
+}
+
+.md-search__scrollwrap {
+  margin: 0;
+}
+
+.md-search-result__list:empty + .md-search-result__meta,
+.md-search-result__meta:empty {
+  display: none;
+}
+
+.md-search-result {
+  padding-bottom: 0;
+}
+
+.md-search__suggest {
+  display: none !important;
+  padding-bottom: 0.35rem;
+}
+
+[data-md-color-scheme="slate"] .md-search__output {
+  box-shadow: 0 18px 46px rgba(2, 6, 23, 0.52);
+  border-color: rgba(96, 165, 250, 0.16);
+}
+
+[data-md-color-scheme="slate"] .md-search__form {
+  background: #111827;
+  border-color: rgba(96, 165, 250, 0.18);
+  box-shadow: 0 8px 20px rgba(2, 6, 23, 0.34);
+}
+
+[data-md-color-scheme="slate"] .md-search__input {
+  color: rgba(255, 255, 255, 0.92);
+}
+
+[data-md-color-scheme="slate"] .md-search__input::placeholder {
+  color: rgba(203, 213, 225, 0.72);
+}
+
+[data-md-color-scheme="slate"] .md-search-result__meta {
+  background: rgba(59, 130, 246, 0.12);
+  border-bottom-color: rgba(96, 165, 250, 0.16);
+}
+
+[data-md-color-scheme="slate"] .md-search-result__link:hover,
+[data-md-color-scheme="slate"] .md-search-result__link:focus {
+  background: rgba(96, 165, 250, 0.12);
+}
+
+[data-md-color-scheme="slate"] .md-search-result mark {
+  background: rgba(96, 165, 250, 0.22);
+}
+
+/* ── Print ────────────────────────────────────── */
+@media print {
+  .md-sidebar,
+  .md-tabs,
+  .md-header,
+  .md-footer {
+    display: none;
+  }
+  .md-content {
+    max-width: 100%;
+  }
+}
+
+/* ── Tablet (≤ 960px) ─────────────────────────── */
+@media screen and (max-width: 960px) {
+  .md-typeset table:not([class]) {
+    font-size: 0.82rem;
+  }
+
+  .md-typeset img[alt="AI Chip Stack Diagram"] {
+    width: min(760px, 100%);
+  }
+
+  .md-tabs__link {
+    font-size: 0.69rem;
+    padding: 0.46rem 0.08rem 0.4rem;
+  }
+}
+
+/* ── Mobile (≤ 768px) ─────────────────────────── */
+@media screen and (max-width: 768px) {
+  .md-content__inner > h1:first-of-type,
+  .md-typeset h1 {
+    font-size: 1.6rem !important;
+  }
+
+  .md-typeset table:not([class]) {
+    font-size: 0.78rem;
+  }
+
+  .md-typeset table:not([class]) th,
+  .md-typeset table:not([class]) td {
+    padding: 0.35rem 0.5rem;
+  }
+
+  .md-typeset img[alt="AI Chip Stack Diagram"] {
+    width: 100%;
+  }
+
+  .course-identity {
+    gap: 0.65rem;
+    grid-template-columns: 1fr;
+    padding: 0.78rem 0.85rem;
+  }
+
+  .course-identity__icon {
+    height: 2.2rem;
+    width: 2.2rem;
+  }
+
+  .course-identity__title {
+    font-size: 0.86rem;
+  }
+
+  .md-header__button.md-logo img,
+  .md-header__button.md-logo svg {
+    height: 1.8rem !important;
+  }
+}
+
+/* ── Small phone (≤ 480px) ────────────────────── */
+@media screen and (max-width: 480px) {
+  .md-content__inner > h1:first-of-type,
+  .md-typeset h1 {
+    font-size: 1.35rem !important;
+    letter-spacing: -0.02em;
+  }
+
+  .md-typeset table:not([class]) {
+    font-size: 0.72rem;
+  }
+
+  .md-typeset table:not([class]) th,
+  .md-typeset table:not([class]) td {
+    padding: 0.28rem 0.4rem;
+  }
+
+  .md-typeset pre code {
+    font-size: 0.72em;
+  }
+}
+
+/* ── Dark mode refinements ────────────────────── */
+[data-md-color-scheme="slate"] .md-typeset table:not([class]) {
+  box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+}
+
+[data-md-color-scheme="slate"] .md-typeset pre {
+  box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+}
+
+[data-md-color-scheme="slate"] .md-content__inner > p > img[alt="AI Hardware Engineer Roadmap"] {
+  box-shadow: 0 4px 24px rgba(0,0,0,0.4);
+}
+
+/* the tab rail follows the page surface in both schemes, so these only need to
+   restate the dark hairline and a brighter accent for the active underline */
+[data-md-color-scheme="slate"] .md-tabs {
+  background: var(--md-default-bg-color);
+  border-bottom-color: rgba(148, 163, 184, 0.16);
+}
+
+[data-md-color-scheme="slate"] .md-header {
+  background: linear-gradient(180deg, #111827, #1f2937);
+}
+
+[data-md-color-scheme="slate"] .md-tabs__link:hover {
+  background: transparent;
+  border-bottom-color: rgba(148, 163, 184, 0.3);
+}
+
+[data-md-color-scheme="slate"] .md-tabs__link--active {
+  background: transparent;
+  border-bottom-color: var(--md-accent-fg-color);
+  box-shadow: none;
+}
+
+/* ════════════════════════════════════════════════════════════════
+   Readability & typography refinements
+   Layered on top of the theme above; tweak/remove this block to revert.
+   Goal: cleaner, calmer, easier-to-read long-form prose.
+   ════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* Inter — purpose-built for on-screen reading — with a native fallback stack.
+     Inter is loaded by Material via mkdocs.yml (font.text: Inter). */
+  --md-text-font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI",
+    Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+/* Comfortable body rhythm — ChatGPT-style generous spacing for long-form reading */
+.md-typeset {
+  font-size: 0.83rem;
+  line-height: 1.9;
+  font-weight: 350;            /* lighter normal weight for a cleaner read */
+  letter-spacing: 0.003em;     /* a hair of tracking keeps thin text crisp */
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Keep body prose (paragraphs, lists) light; headings/bold/tables set their own weight */
+.md-typeset p,
+.md-typeset li {
+  line-height: 1.9;
+  font-weight: 350;
+}
+
+.md-typeset p {
+  margin: 1em 0;
+}
+
+.md-typeset ul,
+.md-typeset ol {
+  margin: 0.85em 0;
+}
+
+.md-typeset li + li {
+  margin-top: 0.5em;
+}
+
+.md-typeset li > ul,
+.md-typeset li > ol {
+  margin: 0.4em 0 0.25em;
+}
+
+/* Headings: a little more breathing room above for clearer section breaks */
+.md-typeset h2 {
+  margin-top: 2.4rem;
+}
+
+.md-typeset h3 {
+  margin-top: 1.85rem;
+  margin-bottom: 0.5rem;
+}
+
+/* Clearer, calmer links */
+.md-typeset a {
+  text-underline-offset: 0.16em;
+  text-decoration-thickness: 0.07em;
+  transition: color 0.15s ease, text-decoration-color 0.15s ease;
+}
+
+.md-typeset a:not(.md-button):hover {
+  text-decoration: underline;
+}
+
+/* Emphasis that scans without shouting */
+.md-typeset strong {
+  font-weight: 650;
+}
+
+/* Optimal reading measure on wide screens — prose only.
+   Tables, code blocks, and images keep full width. */
+@media screen and (min-width: 1240px) {
+  .md-content__inner > p,
+  .md-content__inner > ul,
+  .md-content__inner > ol,
+  .md-content__inner > blockquote {
+    max-width: 52rem;
+  }
+}
+
+/* Calmer table hover (subtle tint instead of an accent flash) */
+.md-typeset table:not([class]) tr:hover td {
+  background: var(--md-default-fg-color--lightest);
+}
+
+/* Compact lecture-map / index tables — noticeably smaller font + tighter cells.
+   Wrap a table in <div class="lecture-map" markdown> … </div> to opt in. */
+.md-typeset .lecture-map table:not([class]) {
+  font-size: 0.68rem;
+  line-height: 1.4;
+}
+.md-typeset .lecture-map table:not([class]) th,
+.md-typeset .lecture-map table:not([class]) td {
+  padding: 0.26rem 0.55rem;
+}
+
+/* Dark-mode: keep body text comfortably legible (not washed out) */
+[data-md-color-scheme="slate"] .md-typeset {
+  color: rgba(236, 240, 248, 0.9);
+}
+
+/* ════════════════════════════════════════════════════════════════
+   Cleaner tables — brand-tinted (indigo), soft zebra, no heavy grey
+   ════════════════════════════════════════════════════════════════ */
+
+.md-typeset table:not([class]) {
+  border: 1px solid color-mix(in srgb, var(--md-primary-fg-color) 18%, transparent);
+}
+
+.md-typeset table:not([class]) th {
+  background: color-mix(in srgb, var(--md-primary-fg-color) 10%, var(--md-default-bg-color));
+  color: var(--md-default-fg-color);
+  border-bottom: 2px solid var(--md-primary-fg-color);
+}
+
+.md-typeset table:not([class]) td {
+  border-top: 1px solid color-mix(in srgb, var(--md-primary-fg-color) 12%, transparent);
+}
+
+/* gentle zebra striping for scan-ability (replaces flat grey) */
+.md-typeset table:not([class]) tbody tr:nth-child(even) td {
+  background: color-mix(in srgb, var(--md-primary-fg-color) 4.5%, transparent);
+}
+
+.md-typeset table:not([class]) tbody tr:hover td {
+  background: color-mix(in srgb, var(--md-primary-fg-color) 11%, transparent);
+}
+
+/* dark mode: tints read well over the slate background too */
+[data-md-color-scheme="slate"] .md-typeset table:not([class]) th {
+  background: color-mix(in srgb, var(--md-primary-fg-color) 22%, var(--md-default-bg-color));
+}
+[data-md-color-scheme="slate"] .md-typeset table:not([class]) tbody tr:nth-child(even) td {
+  background: color-mix(in srgb, var(--md-primary-fg-color) 9%, transparent);
+}
+[data-md-color-scheme="slate"] .md-typeset table:not([class]) tbody tr:hover td {
+  background: color-mix(in srgb, var(--md-primary-fg-color) 18%, transparent);
+}
+
+/* ════════════════════════════════════════════════════════════════
+   Richer code syntax highlighting (per-token colors)
+   Needs a language on the fence (```python / ```bash / ```cpp …);
+   ```text blocks stay monochrome by design.
+   ════════════════════════════════════════════════════════════════ */
+
+/* — Light scheme — */
+.md-typeset .highlight .c,  .md-typeset .highlight .ch, .md-typeset .highlight .cm,
+.md-typeset .highlight .c1, .md-typeset .highlight .cs { color: #6b7785; font-style: italic; }          /* comments  */
+
+.md-typeset .highlight .k,  .md-typeset .highlight .kc, .md-typeset .highlight .kd,
+.md-typeset .highlight .kn, .md-typeset .highlight .kp, .md-typeset .highlight .kr,
+.md-typeset .highlight .kt { color: #8250df; font-weight: 600; }                                        /* keywords  */
+
+.md-typeset .highlight .s,  .md-typeset .highlight .sa, .md-typeset .highlight .sb,
+.md-typeset .highlight .sc, .md-typeset .highlight .dl, .md-typeset .highlight .sd,
+.md-typeset .highlight .s2, .md-typeset .highlight .se, .md-typeset .highlight .sh,
+.md-typeset .highlight .si, .md-typeset .highlight .sx, .md-typeset .highlight .sr,
+.md-typeset .highlight .s1, .md-typeset .highlight .ss { color: #0a7a2f; }                              /* strings   */
+
+.md-typeset .highlight .m,  .md-typeset .highlight .mb, .md-typeset .highlight .mf,
+.md-typeset .highlight .mh, .md-typeset .highlight .mi, .md-typeset .highlight .mo,
+.md-typeset .highlight .il { color: #b35900; }                                                          /* numbers   */
+
+.md-typeset .highlight .nf, .md-typeset .highlight .fm { color: #1f6feb; font-weight: 600; }            /* functions */
+.md-typeset .highlight .nb, .md-typeset .highlight .bp { color: #0b7285; }                              /* builtins  */
+.md-typeset .highlight .nc, .md-typeset .highlight .nn,
+.md-typeset .highlight .ne { color: #b8860b; font-weight: 600; }                                        /* classes   */
+.md-typeset .highlight .nv, .md-typeset .highlight .vc, .md-typeset .highlight .vg,
+.md-typeset .highlight .vi { color: #953800; }                                                          /* variables */
+.md-typeset .highlight .o,  .md-typeset .highlight .ow { color: #cf222e; }                              /* operators */
+.md-typeset .highlight .nd { color: #8250df; }                                                          /* decorators*/
+
+/* — Dark scheme (brighter on the dark code background) — */
+[data-md-color-scheme="slate"] .md-typeset .highlight .c,  [data-md-color-scheme="slate"] .md-typeset .highlight .ch,
+[data-md-color-scheme="slate"] .md-typeset .highlight .cm, [data-md-color-scheme="slate"] .md-typeset .highlight .c1,
+[data-md-color-scheme="slate"] .md-typeset .highlight .cs { color: #8b98a5; }
+
+[data-md-color-scheme="slate"] .md-typeset .highlight .k,  [data-md-color-scheme="slate"] .md-typeset .highlight .kc,
+[data-md-color-scheme="slate"] .md-typeset .highlight .kd, [data-md-color-scheme="slate"] .md-typeset .highlight .kn,
+[data-md-color-scheme="slate"] .md-typeset .highlight .kp, [data-md-color-scheme="slate"] .md-typeset .highlight .kr,
+[data-md-color-scheme="slate"] .md-typeset .highlight .kt { color: #c792ea; }
+
+[data-md-color-scheme="slate"] .md-typeset .highlight .s,  [data-md-color-scheme="slate"] .md-typeset .highlight .sa,
+[data-md-color-scheme="slate"] .md-typeset .highlight .sb, [data-md-color-scheme="slate"] .md-typeset .highlight .sc,
+[data-md-color-scheme="slate"] .md-typeset .highlight .dl, [data-md-color-scheme="slate"] .md-typeset .highlight .sd,
+[data-md-color-scheme="slate"] .md-typeset .highlight .s2, [data-md-color-scheme="slate"] .md-typeset .highlight .se,
+[data-md-color-scheme="slate"] .md-typeset .highlight .sh, [data-md-color-scheme="slate"] .md-typeset .highlight .si,
+[data-md-color-scheme="slate"] .md-typeset .highlight .sx, [data-md-color-scheme="slate"] .md-typeset .highlight .sr,
+[data-md-color-scheme="slate"] .md-typeset .highlight .s1, [data-md-color-scheme="slate"] .md-typeset .highlight .ss { color: #addb67; }
+
+[data-md-color-scheme="slate"] .md-typeset .highlight .m,  [data-md-color-scheme="slate"] .md-typeset .highlight .mb,
+[data-md-color-scheme="slate"] .md-typeset .highlight .mf, [data-md-color-scheme="slate"] .md-typeset .highlight .mh,
+[data-md-color-scheme="slate"] .md-typeset .highlight .mi, [data-md-color-scheme="slate"] .md-typeset .highlight .mo,
+[data-md-color-scheme="slate"] .md-typeset .highlight .il { color: #ffab70; }
+
+[data-md-color-scheme="slate"] .md-typeset .highlight .nf, [data-md-color-scheme="slate"] .md-typeset .highlight .fm { color: #82aaff; }
+[data-md-color-scheme="slate"] .md-typeset .highlight .nb, [data-md-color-scheme="slate"] .md-typeset .highlight .bp { color: #56d4dd; }
+[data-md-color-scheme="slate"] .md-typeset .highlight .nc, [data-md-color-scheme="slate"] .md-typeset .highlight .nn,
+[data-md-color-scheme="slate"] .md-typeset .highlight .ne { color: #ffd580; }
+[data-md-color-scheme="slate"] .md-typeset .highlight .nv, [data-md-color-scheme="slate"] .md-typeset .highlight .vc,
+[data-md-color-scheme="slate"] .md-typeset .highlight .vg, [data-md-color-scheme="slate"] .md-typeset .highlight .vi { color: #f6c177; }
+[data-md-color-scheme="slate"] .md-typeset .highlight .o,  [data-md-color-scheme="slate"] .md-typeset .highlight .ow { color: #ff7b72; }
+[data-md-color-scheme="slate"] .md-typeset .highlight .nd { color: #c792ea; }
+
+/* ════════════════════════════════════════════════════════════════
+   Plain-text / ASCII-diagram blocks (```text or no language):
+   white (page) background + a thin colored border, instead of the
+   grey code fill. Real code blocks (```python, ```bash, …) keep the
+   subtle code background and the token colors above.
+   ════════════════════════════════════════════════════════════════ */
+
+.md-typeset .highlight.language-text,
+.md-typeset .highlight.language-text pre,
+.md-typeset .highlight.language-text pre > code {
+  background: var(--md-default-bg-color) !important;
+}
+
+.md-typeset .highlight.language-text > pre {
+  border: 1px solid color-mix(in srgb, var(--md-primary-fg-color) 30%, transparent);
+  border-radius: 8px;
+  box-shadow: none;
+}
+
+.md-typeset .highlight.language-text > pre > code {
+  color: var(--md-default-fg-color);
+}
+
+/* ════════════════════════════════════════════════════════════════
+   UI/UX pass — breadcrumbs, chrome weight, and table headers
+   ════════════════════════════════════════════════════════════════ */
+
+/* ── Breadcrumbs (theme feature: navigation.path) ──
+   Pages here sit up to six levels deep (Phase 5 › Track G › course › part ›
+   lecture). Without a path trail the only cue to where you are is the sidebar,
+   which is scrolled and truncated. This renders the trail as quiet metadata
+   above the title rather than as another navigation bar. */
+.md-path {
+  font-size: 0.68rem;
+  margin: 0 0 0.55rem;
+  padding: 0;
+}
+
+.md-path__list {
+  gap: 0.1rem;
+  row-gap: 0.15rem;
+}
+
+.md-path__item {
+  color: var(--md-default-fg-color--light);
+}
+
+.md-path__link {
+  color: var(--md-default-fg-color--light);
+  letter-spacing: 0.005em;
+}
+
+.md-path__link:hover,
+.md-path__link:focus {
+  color: var(--md-accent-fg-color);
+}
+
+/* the separator Material injects between crumbs */
+.md-path__item:not(:first-child)::before {
+  color: var(--md-default-fg-color--lighter);
+}
+
+/* On a phone a five-level trail either overflows the viewport or eats four
+   lines before the title. Keep the two crumbs that actually orient the
+   reader — the course and the part — and let them wrap. */
+@media screen and (max-width: 700px) {
+  .md-path {
+    font-size: 0.64rem;
+    margin-bottom: 0.4rem;
+  }
+
+  .md-path__list {
+    flex-wrap: wrap;
+    overflow: hidden;
+  }
+
+  .md-path__item:not(:nth-last-child(-n + 2)) {
+    display: none;
+  }
+
+  /* the retained leading crumb should not re-draw a dangling separator */
+  .md-path__item:nth-last-child(2)::before {
+    content: none;
+  }
+}
+
+/* ── Header weight ──
+   The title no longer competes with the (now quiet) tab rail beneath it, so it
+   can lose a little size and gain tracking. */
+.md-header {
+  box-shadow: 0 1px 3px rgb(2 8 23 / 0.10);
+}
+
+.md-header__title {
+  font-size: 0.92rem;
+  font-weight: 660;
+  letter-spacing: -0.014em;
+}
+
+/* ── Empty table headers ──
+   Several spec tables in the lectures are two-column key/value grids written
+   with an empty header row (`| | |`). Material still paints the <thead>, so the
+   table opened with a tinted, wordless bar. Collapse the row when it holds no
+   text. :has() is supported everywhere this theme targets; browsers without it
+   simply keep the old bar. */
+.md-typeset table:not([class]) thead:not(:has(th:not(:empty))) {
+  display: none;
+}
+
+/* ── Emoji in navigation ──
+   Nav labels contain literal emoji (e.g. the Discord entry). Name a colour-emoji
+   family explicitly so they don't fall back to a tofu box where the primary UI
+   font has no glyph. */
+.md-nav__link,
+.md-tabs__link,
+.md-path__link {
+  font-family: var(--md-text-font-family), "Apple Color Emoji",
+               "Segoe UI Emoji", "Noto Color Emoji", sans-serif;
+}
+
+/* ── Sidebar nav legibility ──
+   Lecture titles are long ("02: The Scoreboard — A Benchmark That Cannot Be
+   Gamed") and wrapped to four cramped lines. Tightening the leading and
+   softening inactive entries makes the column scannable, and the active entry
+   now carries a rail so position survives a wrapped label. */
+@media screen and (min-width: 960px) {
+  .md-nav__link {
+    line-height: 1.42;
+    padding-block: 0.12rem;
+  }
+
+  .md-sidebar--primary .md-nav__item--active > .md-nav__link--active,
+  .md-sidebar--primary .md-nav__link--active {
+    border-left: 2px solid var(--md-primary-fg-color);
+    font-weight: 680;
+    margin-left: -0.6rem;
+    padding-left: 0.5rem;
+  }
+}
+
+/* ── Focus visibility ──
+   Material's default focus ring is easy to lose against tinted surfaces. */
+.md-content a:focus-visible,
+.md-nav__link:focus-visible,
+.md-tabs__link:focus-visible,
+.md-path__link:focus-visible {
+  outline: 2px solid var(--md-accent-fg-color);
+  outline-offset: 2px;
+  border-radius: 3px;
+}
+
+/* ════════════════════════════════════════════════════════════════
+   Design system — the homepage hero and the surface language it sets
+   ════════════════════════════════════════════════════════════════
+
+   The homepage opens with a designed hero (a two-column split and a phase
+   rail), so the rest of the site needs to share that surface language or the
+   landing page reads as a different product. These tokens are the bridge:
+   cards, callouts, and the course identity blocks all draw from the same
+   radii, hairlines, and soft shadows. */
+
+:root {
+  --aihpc-radius: 14px;
+  --aihpc-radius-lg: 20px;
+  --aihpc-elev-1: 0 1px 2px rgb(16 18 24 / 0.05), 0 4px 14px -4px rgb(16 18 24 / 0.08);
+  --aihpc-elev-2: 0 2px 4px rgb(16 18 24 / 0.05), 0 16px 40px -16px rgb(16 18 24 / 0.22);
+  --aihpc-accent: var(--md-primary-fg-color);
+  --aihpc-accent-soft: color-mix(in srgb, var(--md-primary-fg-color) 9%, transparent);
+}
+
+[data-md-color-scheme="slate"] {
+  --aihpc-elev-1: 0 1px 2px rgb(0 0 0 / 0.5), 0 4px 16px -4px rgb(0 0 0 / 0.5);
+  --aihpc-elev-2: 0 2px 4px rgb(0 0 0 / 0.5), 0 18px 44px -16px rgb(0 0 0 / 0.7);
+}
+
+/* ── Homepage hero ──
+   True 50/50 split: thesis on the left, chip on the right. Each title line is
+   a locked phrase so the headline cannot collapse into one-word rows. */
+.home-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: clamp(1.4rem, 3vw, 2.4rem);
+  align-items: center;
+  padding: clamp(0.6rem, 2vw, 1.4rem) 0 clamp(1.2rem, 2.4vw, 2rem);
+}
+
+/* min-width:auto on grid items would let the title steal the image
+   column; both halves must be allowed to shrink to 50%. */
+.home-hero__copy,
+.home-hero__art {
+  min-width: 0;
+}
+
+.home-hero p,
+.home-hero li {
+  overflow-wrap: normal;
+  word-break: normal;
+}
+
+.md-typeset .home-hero__eyebrow {
+  font-family: var(--md-code-font-family);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--aihpc-accent);
+  margin: 0 0 0.85rem;
+}
+
+/* Beat the global page-title rule. Two short locked lines, not a 4-line wrap. */
+.md-typeset h1.home-hero__title,
+.md-content__inner > h1.home-hero__title:first-of-type {
+  font-size: clamp(1.55rem, 1.05rem + 1.25vw, 2.25rem) !important;
+  font-weight: 780;
+  letter-spacing: -0.038em;
+  line-height: 1.08;
+  text-align: left;
+  text-wrap: unset;
+  margin: 0;
+}
+
+.md-typeset h1.home-hero__title .headerlink {
+  display: none;
+}
+
+.md-typeset h1.home-hero__title span {
+  display: block;
+}
+
+.md-typeset .home-hero__lede {
+  margin: 1rem 0 0;
+  max-width: none;
+  font-size: 0.98rem;
+  line-height: 1.55;
+  color: var(--md-default-fg-color--light);
+  text-wrap: pretty;
+}
+
+.home-hero__actions {
+  margin-top: 1.35rem;
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+/* Buttons in the hero read as actions, not links. */
+.home-hero__actions .md-button {
+  border-radius: 999px;
+  padding: 0.6rem 1.3rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  transition: transform 0.16s ease, box-shadow 0.16s ease;
+}
+
+.home-hero__actions .md-button:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--aihpc-elev-2);
+}
+
+.home-hero__art {
+  border-radius: var(--aihpc-radius-lg);
+  overflow: hidden;
+  border: 1px solid var(--aihpc-hairline);
+  background: var(--aihpc-accent-soft);
+  box-shadow: var(--aihpc-elev-2);
+}
+
+.home-hero__art img {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin: 0;
+}
+
+/* Homepage has its own hero + phase rail, so the TOC is redundant and
+   stealing the half-width the chip image needs. */
+.md-main__inner:has(.home-hero) > .md-sidebar--secondary {
+  display: none;
+}
+
+/* ── Phase rail ──
+   The six phases as a connected strip of steps — the curriculum as a path,
+   not a list. A rule runs behind the numbered steps; each step is a link. */
+.home-rail {
+  margin: 0.4rem 0 1.6rem;
+}
+
+.home-rail__row {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(10.25rem, 1fr));
+  gap: 0;
+  border-top: 1px solid var(--aihpc-hairline);
+  position: relative;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+.home-rail__step {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 1rem 0.9rem 0.9rem;
+  border-radius: 0 0 var(--aihpc-radius) var(--aihpc-radius);
+  position: relative;
+  transition: background 0.18s ease;
+}
+
+/* the connecting node on the top rule */
+.home-rail__step::before {
+  content: "";
+  position: absolute;
+  top: -5px;
+  left: 0.9rem;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--md-default-bg-color);
+  border: 2px solid var(--aihpc-accent);
+}
+
+.home-rail__step:hover {
+  background: var(--aihpc-accent-soft);
+}
+
+.home-rail__n {
+  font-family: var(--md-code-font-family);
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--aihpc-accent);
+  letter-spacing: 0.02em;
+}
+
+.home-rail__t {
+  font-size: 0.86rem;
+  font-weight: 600;
+  letter-spacing: -0.012em;
+  color: var(--md-default-fg-color);
+  line-height: 1.3;
+  overflow-wrap: normal;
+  word-break: keep-all;
+  hyphens: none;
+}
+
+/* ── Cards and callouts share the hero's surface ──
+   The course identity blocks and the blockquote callouts were the two richest
+   surfaces already on the site; aligning them to the hero's radius and shadow
+   is what makes the redesign read as one product. */
+.course-identity,
+.md-typeset blockquote {
+  border-radius: var(--aihpc-radius);
+  box-shadow: var(--aihpc-elev-1);
+}
+
+/* the blockquote keeps its accent rail but drops the hard 0-radius left edge */
+.md-typeset blockquote {
+  border-left-width: 3px;
+}
+
+/* ── Tables sit on a surface, not a grey fill ── */
+.md-typeset table:not([class]) {
+  border-radius: var(--aihpc-radius);
+  box-shadow: var(--aihpc-elev-1);
+}
+
+/* ── Responsive: the hero collapses to a single column, rail scrolls ── */
+@media screen and (max-width: 900px) {
+  .home-hero {
+    grid-template-columns: 1fr;
+    gap: 1.4rem;
+  }
+
+  .home-hero__art {
+    order: -1;
+    max-width: 36rem;
+  }
+
+  .home-rail__row {
+    grid-template-columns: none;
+    grid-auto-flow: column;
+    grid-auto-columns: 11.5rem;
+    padding-bottom: 0.4rem;
+  }
+}
+
+@media screen and (max-width: 560px) {
+  .home-hero__actions .md-button {
+    flex: 1 1 auto;
+    justify-content: center;
+  }
+}
+
+/* ── Reduced motion: the rail and buttons keep their state changes, they just
+   stop animating. ── */
+@media (prefers-reduced-motion: reduce) {
+  .home-hero__actions .md-button,
+  .home-rail__step {
+    transition: none;
+  }
+}

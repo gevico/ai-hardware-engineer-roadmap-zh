@@ -1,0 +1,132 @@
+<svg width="1200" height="720" viewBox="0 0 1200 720" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="68" y1="44" x2="1138" y2="684" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0B1220"/>
+      <stop offset="1" stop-color="#13203B"/>
+    </linearGradient>
+    <radialGradient id="journeyGlowA" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(936 258) rotate(90) scale(228 258)">
+      <stop stop-color="#214EBC" stop-opacity="0.42"/>
+      <stop offset="1" stop-color="#214EBC" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="journeyGlowB" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(1002 208) rotate(90) scale(148 148)">
+      <stop stop-color="#14B8A6" stop-opacity="0.30"/>
+      <stop offset="1" stop-color="#14B8A6" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="journeyGlowC" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(860 396) rotate(90) scale(138 138)">
+      <stop stop-color="#F59E0B" stop-opacity="0.18"/>
+      <stop offset="1" stop-color="#F59E0B" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="phaseA" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#375DFB"/>
+      <stop offset="1" stop-color="#1FB6FF"/>
+    </linearGradient>
+    <linearGradient id="phaseB" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#16B364"/>
+      <stop offset="1" stop-color="#2DD4BF"/>
+    </linearGradient>
+    <linearGradient id="phaseC" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#F59E0B"/>
+      <stop offset="1" stop-color="#F97316"/>
+    </linearGradient>
+    <filter id="shadow" x="0" y="0" width="1200" height="720" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="18" stdDeviation="24" flood-color="#020817" flood-opacity="0.34"/>
+    </filter>
+  </defs>
+
+  <g filter="url(#shadow)">
+    <rect x="40" y="36" width="1120" height="648" rx="28" fill="url(#bg)"/>
+    <rect x="40.5" y="36.5" width="1119" height="647" rx="27.5" stroke="#35507D" stroke-opacity="0.45"/>
+  </g>
+
+  <rect x="72" y="72" width="126" height="34" rx="17" fill="#162544"/>
+  <text x="135" y="94" text-anchor="middle" fill="#9DB6FF" font-family="Inter, Arial, sans-serif" font-size="16" font-weight="700" letter-spacing="0.08em">ROADMAP</text>
+
+  <text x="76" y="170" fill="#F8FBFF" font-family="Inter, Arial, sans-serif" font-size="50" font-weight="800">Build the hardware</text>
+  <text x="76" y="226" fill="#F8FBFF" font-family="Inter, Arial, sans-serif" font-size="50" font-weight="800">that runs AI</text>
+  <text x="76" y="274" fill="#C5D2F4" font-family="Inter, Arial, sans-serif" font-size="21">Follow the stack from CUDA kernels and</text>
+  <text x="76" y="304" fill="#C5D2F4" font-family="Inter, Arial, sans-serif" font-size="21">Jetson deployment through ML compilers,</text>
+  <text x="76" y="334" fill="#C5D2F4" font-family="Inter, Arial, sans-serif" font-size="21">runtime systems, and hardware architecture.</text>
+  <text x="76" y="380" fill="#9EB2DA" font-family="Inter, Arial, sans-serif" font-size="17">One roadmap for people moving between AI software,</text>
+  <text x="76" y="406" fill="#9EB2DA" font-family="Inter, Arial, sans-serif" font-size="17">embedded systems, and accelerator engineering.</text>
+
+  <rect x="76" y="452" width="132" height="42" rx="21" fill="#15284D"/>
+  <text x="142" y="478" text-anchor="middle" fill="#D8E4FF" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="700">8-layer stack</text>
+
+  <rect x="222" y="452" width="122" height="42" rx="21" fill="#143046"/>
+  <text x="283" y="478" text-anchor="middle" fill="#D8E4FF" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="700">5 phases</text>
+
+  <rect x="358" y="452" width="182" height="42" rx="21" fill="#3B2720"/>
+  <text x="449" y="478" text-anchor="middle" fill="#FFE4C4" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="700">role-shaped tracks</text>
+
+  <g>
+    <circle cx="936" cy="258" r="228" fill="url(#journeyGlowA)"/>
+    <circle cx="1002" cy="208" r="148" fill="url(#journeyGlowB)"/>
+    <circle cx="860" cy="396" r="138" fill="url(#journeyGlowC)"/>
+
+    <text x="642" y="132" fill="#8FB3FF" font-family="Inter, Arial, sans-serif" font-size="15" font-weight="700" letter-spacing="0.08em">THE LEARNING JOURNEY</text>
+    <path d="M738 208C812 156 905 154 984 198C1048 233 1058 299 1022 350C983 406 909 432 842 432C787 432 747 416 718 388" stroke="#3E69C8" stroke-opacity="0.34" stroke-width="18" stroke-linecap="round"/>
+    <path d="M738 208C812 156 905 154 984 198C1048 233 1058 299 1022 350C983 406 909 432 842 432C787 432 747 416 718 388" stroke="#9BC3FF" stroke-opacity="0.9" stroke-width="4" stroke-linecap="round"/>
+
+    <circle cx="742" cy="206" r="10" fill="#EAF2FF"/>
+    <circle cx="842" cy="168" r="10" fill="#EAF2FF"/>
+    <circle cx="968" cy="206" r="10" fill="#EAF2FF"/>
+    <circle cx="993" cy="334" r="10" fill="#EAF2FF"/>
+    <circle cx="840" cy="432" r="10" fill="#EAF2FF"/>
+
+    <g>
+      <rect x="760" y="183" width="132" height="34" rx="17" fill="#15284D" stroke="#446AA9"/>
+      <text x="826" y="205" text-anchor="middle" fill="#EAF2FF" font-family="Inter, Arial, sans-serif" font-size="14" font-weight="700">Foundations</text>
+    </g>
+
+    <g>
+      <rect x="860" y="145" width="126" height="34" rx="17" fill="#143046" stroke="#2A857B"/>
+      <text x="923" y="167" text-anchor="middle" fill="#DFFAF7" font-family="Inter, Arial, sans-serif" font-size="14" font-weight="700">Embedded</text>
+    </g>
+
+    <g>
+      <rect x="988" y="182" width="134" height="34" rx="17" fill="#1E293B" stroke="#3F7CD8"/>
+      <text x="1055" y="204" text-anchor="middle" fill="#F1F7FF" font-family="Inter, Arial, sans-serif" font-size="14" font-weight="700">AI Workloads</text>
+    </g>
+
+    <g>
+      <rect x="1002" y="310" width="108" height="34" rx="17" fill="#3B2720" stroke="#E27B3B"/>
+      <text x="1056" y="332" text-anchor="middle" fill="#FFF0E4" font-family="Inter, Arial, sans-serif" font-size="14" font-weight="700">Deploy</text>
+    </g>
+
+    <g>
+      <rect x="858" y="409" width="130" height="34" rx="17" fill="#111827" stroke="#52637F"/>
+      <text x="923" y="431" text-anchor="middle" fill="#E8EEF9" font-family="Inter, Arial, sans-serif" font-size="14" font-weight="700">Specialize</text>
+    </g>
+
+    <g opacity="0.85">
+      <circle cx="740" cy="285" r="3" fill="#8FB3FF"/>
+      <circle cx="782" cy="312" r="3" fill="#2DD4BF"/>
+      <circle cx="1082" cy="258" r="3" fill="#8FB3FF"/>
+      <circle cx="940" cy="470" r="3" fill="#F59E0B"/>
+      <circle cx="1034" cy="396" r="3" fill="#E5ECF9"/>
+      <path d="M760 280H832" stroke="#35507D" stroke-opacity="0.65" stroke-width="1.5" stroke-linecap="round"/>
+      <path d="M1012 258H1076" stroke="#35507D" stroke-opacity="0.65" stroke-width="1.5" stroke-linecap="round"/>
+      <path d="M958 468H1038" stroke="#35507D" stroke-opacity="0.65" stroke-width="1.5" stroke-linecap="round"/>
+    </g>
+  </g>
+
+  <rect x="76" y="582" width="186" height="80" rx="20" fill="url(#phaseA)"/>
+  <text x="169" y="615" text-anchor="middle" fill="#F8FBFF" font-family="Inter, Arial, sans-serif" font-size="14" font-weight="700" letter-spacing="0.06em">PHASE 1</text>
+  <text x="169" y="646" text-anchor="middle" fill="#F8FBFF" font-family="Inter, Arial, sans-serif" font-size="21" font-weight="800">Foundations</text>
+
+  <rect x="276" y="582" width="186" height="80" rx="20" fill="url(#phaseB)"/>
+  <text x="369" y="615" text-anchor="middle" fill="#042F1A" font-family="Inter, Arial, sans-serif" font-size="14" font-weight="700" letter-spacing="0.06em">PHASE 2</text>
+  <text x="369" y="646" text-anchor="middle" fill="#062819" font-family="Inter, Arial, sans-serif" font-size="21" font-weight="800">Embedded</text>
+
+  <rect x="476" y="582" width="186" height="80" rx="20" fill="#1E293B" stroke="#2E90FA"/>
+  <text x="569" y="615" text-anchor="middle" fill="#8FB3FF" font-family="Inter, Arial, sans-serif" font-size="14" font-weight="700" letter-spacing="0.06em">PHASE 3</text>
+  <text x="569" y="646" text-anchor="middle" fill="#F8FBFF" font-family="Inter, Arial, sans-serif" font-size="20" font-weight="800">AI Workloads</text>
+
+  <rect x="676" y="582" width="186" height="80" rx="20" fill="url(#phaseC)"/>
+  <text x="769" y="615" text-anchor="middle" fill="#FFF7ED" font-family="Inter, Arial, sans-serif" font-size="14" font-weight="700" letter-spacing="0.06em">PHASE 4</text>
+  <text x="769" y="646" text-anchor="middle" fill="#FFF7ED" font-family="Inter, Arial, sans-serif" font-size="21" font-weight="800">Deploy</text>
+
+  <rect x="876" y="582" width="234" height="80" rx="20" fill="#111827" stroke="#42526D"/>
+  <text x="993" y="616" text-anchor="middle" fill="#A7B7D6" font-family="Inter, Arial, sans-serif" font-size="14" font-weight="700" letter-spacing="0.06em">PHASE 5</text>
+  <text x="993" y="647" text-anchor="middle" fill="#F8FBFF" font-family="Inter, Arial, sans-serif" font-size="22" font-weight="800">Specialize</text>
+</svg>

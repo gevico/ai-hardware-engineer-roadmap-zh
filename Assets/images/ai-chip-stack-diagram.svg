@@ -1,0 +1,93 @@
+<svg width="920" height="800" viewBox="0 0 920 800" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="76" y1="42" x2="844" y2="772" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0B1220"/>
+      <stop offset="1" stop-color="#13203B"/>
+    </linearGradient>
+    <filter id="shadow" x="0" y="0" width="920" height="800" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="14" stdDeviation="22" flood-color="#020817" flood-opacity="0.28"/>
+    </filter>
+  </defs>
+
+  <g filter="url(#shadow)">
+    <rect x="34" y="28" width="852" height="744" rx="30" fill="url(#bg)"/>
+    <rect x="34.5" y="28.5" width="851" height="743" rx="29.5" stroke="#35507D" stroke-opacity="0.5"/>
+  </g>
+
+  <rect x="68" y="60" width="116" height="30" rx="15" fill="#162544"/>
+  <text x="126" y="80" text-anchor="middle" fill="#9DB6FF" font-family="Inter, Arial, sans-serif" font-size="13" font-weight="700" letter-spacing="0.08em">8 LAYERS</text>
+
+  <text x="68" y="128" fill="#F8FBFF" font-family="Inter, Arial, sans-serif" font-size="38" font-weight="800">AI Chip Stack</text>
+  <text x="68" y="158" fill="#C5D2F4" font-family="Inter, Arial, sans-serif" font-size="16">Eight layers that map a model to compilers, runtimes,</text>
+  <text x="68" y="180" fill="#C5D2F4" font-family="Inter, Arial, sans-serif" font-size="16">systems software, and finally physical hardware.</text>
+
+  <rect x="60" y="220" width="388" height="104" rx="22" fill="#2E90FA"/>
+  <circle cx="96" cy="272" r="19" fill="#0F172A"/>
+  <text x="96" y="278" text-anchor="middle" fill="#F8FBFF" font-family="Inter, Arial, sans-serif" font-size="15" font-weight="800">L1</text>
+  <text x="128" y="256" fill="#F8FBFF" font-family="Inter, Arial, sans-serif" font-size="19" font-weight="800">AI App and Framework</text>
+  <text x="128" y="278" fill="#EAF2FF" font-family="Inter, Arial, sans-serif" font-size="12">Models, serving logic, and application behavior</text>
+  <text x="128" y="294" fill="#EAF2FF" font-family="Inter, Arial, sans-serif" font-size="12">live here.</text>
+  <text x="128" y="313" fill="#F8FBFF" font-family="Inter, Arial, sans-serif" font-size="11.5" font-weight="700">PyTorch · ONNX · TensorRT</text>
+
+  <rect x="472" y="220" width="388" height="104" rx="22" fill="#3B82F6"/>
+  <circle cx="508" cy="272" r="19" fill="#0F172A"/>
+  <text x="508" y="278" text-anchor="middle" fill="#F8FBFF" font-family="Inter, Arial, sans-serif" font-size="15" font-weight="800">L2</text>
+  <text x="540" y="256" fill="#F8FBFF" font-family="Inter, Arial, sans-serif" font-size="19" font-weight="800">ML Compiler</text>
+  <text x="540" y="278" fill="#EAF2FF" font-family="Inter, Arial, sans-serif" font-size="12">Lowers graphs into optimized kernels, schedules,</text>
+  <text x="540" y="294" fill="#EAF2FF" font-family="Inter, Arial, sans-serif" font-size="12">and target code.</text>
+  <text x="540" y="313" fill="#F8FBFF" font-family="Inter, Arial, sans-serif" font-size="11.5" font-weight="700">MLIR · TVM · LLVM · Triton</text>
+
+  <rect x="60" y="338" width="388" height="104" rx="22" fill="#2563EB"/>
+  <circle cx="96" cy="390" r="19" fill="#0F172A"/>
+  <text x="96" y="396" text-anchor="middle" fill="#F8FBFF" font-family="Inter, Arial, sans-serif" font-size="15" font-weight="800">L3</text>
+  <text x="128" y="374" fill="#F8FBFF" font-family="Inter, Arial, sans-serif" font-size="19" font-weight="800">Runtime and Driver</text>
+  <text x="128" y="396" fill="#EAF2FF" font-family="Inter, Arial, sans-serif" font-size="12">Connects software requests to accelerator, memory,</text>
+  <text x="128" y="412" fill="#EAF2FF" font-family="Inter, Arial, sans-serif" font-size="12">and device execution.</text>
+  <text x="128" y="431" fill="#F8FBFF" font-family="Inter, Arial, sans-serif" font-size="11.5" font-weight="700">CUDA runtime · driver APIs</text>
+
+  <rect x="472" y="338" width="388" height="104" rx="22" fill="#16A34A"/>
+  <circle cx="508" cy="390" r="19" fill="#0F172A"/>
+  <text x="508" y="396" text-anchor="middle" fill="#F8FBFF" font-family="Inter, Arial, sans-serif" font-size="15" font-weight="800">L4</text>
+  <text x="540" y="374" fill="#F8FBFF" font-family="Inter, Arial, sans-serif" font-size="19" font-weight="800">Firmware and OS</text>
+  <text x="540" y="396" fill="#EAF2FF" font-family="Inter, Arial, sans-serif" font-size="12">Boots the device, manages resources, and exposes</text>
+  <text x="540" y="412" fill="#EAF2FF" font-family="Inter, Arial, sans-serif" font-size="12">the deployment platform.</text>
+  <text x="540" y="431" fill="#F8FBFF" font-family="Inter, Arial, sans-serif" font-size="11.5" font-weight="700">FreeRTOS · BSPs · Linux</text>
+
+  <rect x="60" y="456" width="388" height="104" rx="22" fill="#059669"/>
+  <circle cx="96" cy="508" r="19" fill="#0F172A"/>
+  <text x="96" y="514" text-anchor="middle" fill="#F8FBFF" font-family="Inter, Arial, sans-serif" font-size="15" font-weight="800">L5</text>
+  <text x="128" y="492" fill="#F8FBFF" font-family="Inter, Arial, sans-serif" font-size="19" font-weight="800">Hardware Architecture</text>
+  <text x="128" y="514" fill="#EAF2FF" font-family="Inter, Arial, sans-serif" font-size="12">Defines dataflow, memory hierarchy, on-chip network,</text>
+  <text x="128" y="530" fill="#EAF2FF" font-family="Inter, Arial, sans-serif" font-size="12">and compute organization.</text>
+  <text x="128" y="549" fill="#F8FBFF" font-family="Inter, Arial, sans-serif" font-size="11.5" font-weight="700">systolic arrays · HBM · NoC</text>
+
+  <rect x="472" y="456" width="388" height="104" rx="22" fill="#CA8A04"/>
+  <circle cx="508" cy="508" r="19" fill="#111827"/>
+  <text x="508" y="514" text-anchor="middle" fill="#FFF7ED" font-family="Inter, Arial, sans-serif" font-size="15" font-weight="800">L6</text>
+  <text x="540" y="492" fill="#111827" font-family="Inter, Arial, sans-serif" font-size="19" font-weight="800">RTL and Logic Design</text>
+  <text x="540" y="514" fill="#1F2937" font-family="Inter, Arial, sans-serif" font-size="12">Implements the architecture in synthesizable logic</text>
+  <text x="540" y="530" fill="#1F2937" font-family="Inter, Arial, sans-serif" font-size="12">and verification code.</text>
+  <text x="540" y="549" fill="#1F2937" font-family="Inter, Arial, sans-serif" font-size="11.5" font-weight="700">SystemVerilog · FPGA · verification</text>
+
+  <rect x="60" y="574" width="388" height="104" rx="22" fill="#F97316"/>
+  <circle cx="96" cy="626" r="19" fill="#111827"/>
+  <text x="96" y="632" text-anchor="middle" fill="#FFF7ED" font-family="Inter, Arial, sans-serif" font-size="15" font-weight="800">L7</text>
+  <text x="128" y="610" fill="#FFF7ED" font-family="Inter, Arial, sans-serif" font-size="19" font-weight="800">Physical Implementation</text>
+  <text x="128" y="632" fill="#FFF1E8" font-family="Inter, Arial, sans-serif" font-size="12">Turns logic into floorplans, timing closure, and</text>
+  <text x="128" y="648" fill="#FFF1E8" font-family="Inter, Arial, sans-serif" font-size="12">manufacturable geometry.</text>
+  <text x="128" y="667" fill="#FFF7ED" font-family="Inter, Arial, sans-serif" font-size="11.5" font-weight="700">OpenROAD · timing · place and route</text>
+
+  <rect x="472" y="574" width="388" height="104" rx="22" fill="#EF4444"/>
+  <circle cx="508" cy="626" r="19" fill="#111827"/>
+  <text x="508" y="632" text-anchor="middle" fill="#FFF5F5" font-family="Inter, Arial, sans-serif" font-size="15" font-weight="800">L8</text>
+  <text x="540" y="610" fill="#FFF5F5" font-family="Inter, Arial, sans-serif" font-size="19" font-weight="800">Fabrication and Packaging</text>
+  <text x="540" y="632" fill="#FFF1F2" font-family="Inter, Arial, sans-serif" font-size="12">Moves the design into foundry process, packaging,</text>
+  <text x="540" y="648" fill="#FFF1F2" font-family="Inter, Arial, sans-serif" font-size="12">assembly, yield, and test.</text>
+  <text x="540" y="667" fill="#FFF5F5" font-family="Inter, Arial, sans-serif" font-size="11.5" font-weight="700">foundry · package design · test</text>
+
+  <rect x="208" y="714" width="224" height="30" rx="15" fill="#12213C" stroke="#28436F"/>
+  <text x="320" y="734" text-anchor="middle" fill="#CFE0FF" font-family="Inter, Arial, sans-serif" font-size="11.5" font-weight="700">L1-L6 HANDS-ON IN THIS ROADMAP</text>
+
+  <rect x="448" y="714" width="264" height="30" rx="15" fill="#181E2C" stroke="#3E4A66"/>
+  <text x="580" y="734" text-anchor="middle" fill="#D5DCEE" font-family="Inter, Arial, sans-serif" font-size="11.5" font-weight="700">L7-L8 GUIDED LABS AND CONCEPTS</text>
+</svg>

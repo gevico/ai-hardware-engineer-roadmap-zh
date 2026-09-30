@@ -1,0 +1,176 @@
+// jllm_engine.h — LLM inference engine (Jetson-native)
+
+#pragma once
+
+#include "jllm_memory.h"
+#include "jllm_jetson.h"
+#include "jllm_kernels.h"
+#include <cuda_runtime.h>
+#include <string>
+#include <vector>
+#include <functional>
+#include <unordered_map>
+
+namespace jllm {
+
+// ── Model config (read from GGUF header) ─────────────────────────────────
+
+struct ModelConfig {
+    std::string name;
+    int         n_layers       = 0;
+    int         n_heads        = 0;
+    int         n_kv_heads     = 0;
+    int         head_dim       = 0;
+    int         hidden_dim     = 0;
+    int         intermediate_dim = 0;
+    int         vocab_size     = 0;
+    int         max_seq_len    = 0;
+    float       rope_theta     = 0;
+    int         quant_type     = 0;
+
+    int gqa_group_size() const { return n_kv_heads > 0 ? n_heads / n_kv_heads : 1; }
+    int64_t weight_bytes() const;
+    int64_t kv_per_token_bytes(int kv_type_bytes) const {
+        return 2LL * n_layers * n_kv_heads * head_dim * kv_type_bytes;
+    }
+};
+
+// ── Generation parameters ────────────────────────────────────────────────
+
+struct GenParams {
+    int   max_tokens    = 256;
+    float temperature   = 0.7f;
+    int   top_k         = 40;
+    float top_p         = 0.9f;
+    float repeat_penalty = 1.1f;
+    int   context_limit = 0;
+    bool  use_cuda_graph = true;
+    bool  kv_int8       = true;
+};
+
+using TokenCallback = std::function<void(const char* text, bool is_eos)>;
+
+struct GenStats {
+    int     prompt_tokens      = 0;
+    int     completion_tokens  = 0;
+    float   prompt_ms          = 0;
+    float   decode_ms          = 0;
+    float   prompt_tok_per_sec = 0;
+    float   decode_tok_per_sec = 0;
+    int64_t peak_memory_mb     = 0;
+    float   peak_thermal_c     = 0;
+    int     oom_stops          = 0;
+    int     thermal_pauses     = 0;
+};
+
+// ── Layer weights (pointers into mmap'd GGUF blob) ───────────────────────
+
+struct LayerWeights {
+    const void* wq       = nullptr;
+    const void* wk       = nullptr;
+    const void* wv       = nullptr;
+    const void* wo       = nullptr;
+    const void* w_gate   = nullptr;
+    const void* w_up     = nullptr;
+    const void* w_down   = nullptr;
+    const void* rms_attn = nullptr;  // FP32 or FP16 depending on GGUF
+    const void* rms_ffn  = nullptr;  // FP32 or FP16 depending on GGUF
+    int rms_type = 0;                // 0=F32, 1=F16
+    const half* sq       = nullptr;
+    const half* sk       = nullptr;
+    const half* sv       = nullptr;
+    const half* so       = nullptr;
+    const half* s_gate   = nullptr;
+    const half* s_up     = nullptr;
+    const half* s_down   = nullptr;
+};
+
+struct ModelWeights {
+    const void*     tok_embd    = nullptr;   // F32 or F16
+    const void*     output_norm = nullptr;  // F32 or F16
+    int             embd_type   = 0;        // 0=F32, 1=F16
+    const void*     output      = nullptr;
+    const half*     s_output    = nullptr;
+    LayerWeights*   layers      = nullptr;
+    int             n_layers    = 0;
+};
+
+// ── Tokenizer ────────────────────────────────────────────────────────────
+
+struct Tokenizer {
+    std::vector<std::string> vocab;
+    int bos_id = 1;
+    int eos_id = 2;
+
+    bool load_from_gguf(const std::string& path);
+    std::vector<int> encode(const std::string& text) const;
+    std::string decode(int token_id) const;
+    std::string decode(const std::vector<int>& ids) const;
+
+private:
+    std::unordered_map<std::string, int> token_to_id_;
+    std::vector<int> sorted_by_len_;
+    int max_token_len_ = 0;
+};
+
+// ── Sampling ─────────────────────────────────────────────────────────────
+
+int sample_token(float* logits, int vocab_size, const GenParams& params,
+                 const int* recent_tokens = nullptr, int n_recent = 0);
+
+// ── GGUF loaders ─────────────────────────────────────────────────────────
+
+ModelConfig   load_gguf_config(const std::string& path);
+bool          load_gguf_weights(const std::string& path, void** weights, int64_t* size);
+bool          load_and_map_weights(const std::string& path, void** blob, int64_t* blob_size,
+                                   ModelWeights* mw, const ModelConfig& cfg);
+ModelWeights  map_weights(const void* blob, int64_t blob_size, const ModelConfig& cfg);
+
+// ── Engine ───────────────────────────────────────────────────────────────
+
+class Engine {
+public:
+    Engine();
+    ~Engine();
+
+    bool load(const std::string& gguf_path, const GenParams& params);
+    void unload();
+    GenStats generate(const std::string& prompt, const GenParams& params,
+                      TokenCallback token_cb = nullptr);
+    void stop();
+
+    bool          is_loaded() const { return loaded_; }
+    ModelConfig   config() const { return config_; }
+    MemoryBudget  memory() const { return budget_; }
+    LiveStats     stats() const;
+
+private:
+    bool loaded_ = false;
+    bool stop_flag_ = false;
+
+    ModelConfig   config_;
+    GenParams     gen_params_;
+    MemoryBudget  budget_;
+    KVCachePool   kv_cache_;
+    ScratchPool   scratch_;
+
+    void*         weights_ = nullptr;
+    int64_t       weights_size_ = 0;
+    ModelWeights  model_weights_ = {};
+    Tokenizer     tokenizer_;
+
+    int           last_token_ = 0;
+    std::vector<int> recent_tokens_;
+
+    cudaStream_t    stream_ = nullptr;
+    cudaGraph_t     decode_graph_ = nullptr;
+    cudaGraphExec_t decode_graph_exec_ = nullptr;
+    bool            graph_captured_ = false;
+
+    void transformer_layer(int layer, int pos, half* x);
+    int  decode_step(int pos);
+    void build_cuda_graph(int pos);
+    bool check_memory_and_thermal(int pos);
+};
+
+}  // namespace jllm

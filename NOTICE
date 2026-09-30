@@ -1,0 +1,31 @@
+NOTICE
+======
+
+本仓库是以下项目的**中文翻译派生作品**：
+
+    ai-hardware-engineer-roadmap
+    https://github.com/ai-hpc/ai-hardware-engineer-roadmap
+    Copyright (c) 2025 ai-hpc 及贡献者
+    License: MIT（见本仓库 LICENSE）
+
+原文著作权归上游作者所有。译文按上游 MIT 许可分发，并在此保留上游署名；
+再分发（含修改后的译文）时请一并保留本 NOTICE 与 LICENSE。
+
+仓库内容构成
+------------
+
+* **中文译文**：每页中文正文在前，原文折叠在 `<details>` 内便于对照；
+  术语保留英文原词（GPU kernel / roofline / KV cache …）。
+* **上游代码与素材，原样保留、未作修改**：讲义配套的 `.cpp` / `.py` / `.cu` /
+  `.sh` / `.h` / `Makefile` 等文件与 `Assets/` 图片，与上游逐字节一致，
+  许可同上（MIT）。译文与它们之间的相对路径引用保持可解析。
+* **未收录**上游的文档站工程文件：`scripts/`、`overrides/`、`mkdocs.yml`、
+  `robots.txt`、`llms.txt` 与站点导出 `AI-Hardware-Engineer-Roadmap.html` ——
+  它们只服务于上游自己的文档站，对读者没有意义。
+* 上游的 `tinygrad` 子模块（`Phase 5/…/tinygrad-source`）未收录，正文里以链接指向上游。
+
+生成方式
+--------
+
+译文由一条翻译流水线生成（术语表约束 + 机器翻译 + 结构校验），流水线本身在另一个仓库，
+与内容分开发布。译文可能存在误译，重要结论请回查原文。

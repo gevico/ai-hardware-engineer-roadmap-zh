@@ -1,0 +1,1414 @@
+---
+title: 外设访问
+description: 外设访问
+---
+
+# 外设访问
+
+<div class="course-identity auto-course" style="--course-accent: #7e22ce; --course-accent-rgb: 126, 34, 206;" markdown="1">
+<div class="course-identity__icon">PA</div>
+<div markdown="1">
+<p class="course-identity__eyebrow">深度解析 · Jetson 方向</p>
+<p class="course-identity__title">Peripheral Access 的专属课程标识。</p>
+<p class="course-identity__meta">产物：Jetson 集成 demo · 度量：延迟、内存、功耗、日志</p>
+</div>
+</div>
+
+
+**阶段 4 — 方向 B — 模块 5.1** · 应用开发
+
+> **重点：** 从 Linux 用户态访问并控制 **Jetson Orin Nano 8GB** 上的硬件外设 —— GPIO、PWM、UART、SPI、I2C、CAN、USB、存储和背光。每个接口都同时给出 sysfs/chardev 与库两种用法。
+
+**所属：** [5. 应用开发](../Guide.md)
+
+**范围边界：** 本模块讲的是**从 Linux 进行 runtime 访问**。如果需要修改 **pinmux**、**设备树**或**自定义载板布线**，请参考：
+
+- [2. 自定义载板设计与 bring-up（上电点亮/调通）](../../02-定制载板设计与启动/Guide.md)
+- [3. L4T 定制](../../03-L4T定制/Guide.md)
+
+---
+
+
+## 1. GPIO（Linux）
+
+Jetson Orin Nano 通过 **gpiochip** 字符设备接口（`/dev/gpiochipN`）暴露 GPIO。旧的 sysfs 接口（`/sys/class/gpio/`）已废弃 —— 请改用 `libgpiod`。
+
+### libgpiod 工具
+
+```bash
+# List all GPIO chips
+gpiodetect
+
+# Show all lines on a chip
+gpioinfo gpiochip0
+
+# Read a GPIO input from a real line offset
+gpioget gpiochip0 43
+
+# Set a GPIO output high on a real line offset
+gpioset gpiochip0 43=1
+
+# Monitor GPIO events (rising/falling edge) on a real line offset
+gpiomon gpiochip0 43
+```
+
+### `gpiodetect` 在 Jetson 上意味着什么
+
+在 Jetson Orin Nano 开发套件上，通常会看到类似这样的输出：
+
+```text
+gpiochip0 [tegra234-gpio] (164 lines)
+gpiochip1 [tegra234-gpio-aon] (32 lines)
+```
+
+- `gpiochip0` 是主 Tegra234 GPIO 控制器
+- `gpiochip1` 是 **always-on** GPIO 控制器，用于低功耗和唤醒相关信号
+- 括号中的数字是该控制器上存在的 line offset 数量
+
+对大多数 40-pin 排针相关工作而言，你打交道的基本都是 `gpiochip0`。
+
+### 如何读懂 `gpioinfo`
+
+`gpioinfo gpiochip0` 会为每个 line offset 打印一行。例如：
+
+```text
+line  35:      "PG.00" "Force Recovery" input active-low [used]
+line  43:      "PH.00"       unused   input  active-high
+line 131:      "PZ.01"  "interrupt"   input  active-high [used]
+```
+
+各字段的含义如下：
+
+| Field | Meaning |
+|-------|---------|
+| `line 43` | **芯片相对的 line offset**。就是传给 `gpioget`、`gpioset` 和 `gpiomon` 的那个数字。 |
+| `"PH.00"` | 驱动/设备树暴露的 SoC pad 或 line 名称。 |
+| `unused` / `"Force Recovery"` / `"interrupt"` | 当前 consumer。`unused` 表示当前没有驱动或用户态进程占用它。 |
+| `input` / `output` | 当前方向。 |
+| `active-high` / `active-low` | 逻辑极性。 |
+| `[used]` | 该 line 已被 kernel 或另一个进程请求。不要随意复用。 |
+
+### 真正需要关注的 runtime 名称
+
+本指南要求把这几个名称区分开：
+
+| Name | Example | Use it for |
+|------|---------|------------|
+| 排针引脚编号 | `Pin 7` | 开发套件上的物理接线 |
+| 板级信号名 | `GPIO09` | 板级引脚定义表和原理图 |
+| SoC pad 名称 | `PH.00` | 信号的低层标识 |
+| `gpiochip` line offset | `43` | `gpioget`, `gpioset`, `gpiomon` |
+
+简版：
+
+- 接线时用**排针引脚编号**
+- 看引脚定义时用**板级信号名**
+- 看低层 GPIO 或 BSP 数据时用 **SoC pad 名称**
+- 通过 `libgpiod` 与 Linux 交互时用 **line offset**
+
+### 形如 `PH.00` 的名称是什么意思
+
+`PH.00`、`PG.00` 或 `PZ.01` 这类名称是 **SoC pad / GPIO bank 名称**。
+
+`PH.00` 的读法是：
+
+- `P` = GPIO 命名前缀
+- `H` = bank 或 port
+- `00` = 该 bank 内的位编号
+
+所以 `PH.00` 是该信号在 **SoC 侧的标识**。它既不是排针引脚编号，也不是 Linux line offset。
+
+### 为什么 `gpioget gpiochip0 <line>` 在你的 shell 里会失败
+
+文档里的 `<line>` 是一个**占位符**，不是让你照着敲的东西。
+
+在 `bash` 中，尖括号表示 shell 重定向。因此：
+
+```bash
+gpioget gpiochip0 <line>
+```
+
+会被解释为「从名为 `line` 的文件读取 stdin」，所以才失败。
+
+把占位符替换成 `gpioinfo` 中真实的 line offset，例如：
+
+```bash
+# Read line 43 on gpiochip0
+gpioget gpiochip0 43
+
+# Drive line 43 high
+gpioset gpiochip0 43=1
+
+# Monitor line 43 for edges
+gpiomon gpiochip0 43
+```
+
+另外注意：
+
+- `gpioget` 用于**读取**
+- `gpioset` 用于**驱动输出**
+- `gpioget gpiochip0 <line>=1` 无效，因为 `gpioget` 不设置值
+
+
+<details>
+<summary>English original</summary>
+
+**Peripheral Access**
+
+<div class="course-identity auto-course" style="--course-accent: #7e22ce; --course-accent-rgb: 126, 34, 206;" markdown="1">
+<div class="course-identity__icon">PA</div>
+<div markdown="1">
+<p class="course-identity__eyebrow">Deep Dive · Jetson Track</p>
+<p class="course-identity__title">Specialized course identity for Peripheral Access.</p>
+<p class="course-identity__meta">Artifact: Jetson integration demo · Measure: latency, memory, power, logs</p>
+</div>
+</div>
+
+
+**Phase 4 — Track B — Module 5.1** · Application Development
+
+> **Focus:** Access and control hardware peripherals on the **Jetson Orin Nano 8GB** from Linux userspace — GPIO, PWM, UART, SPI, I2C, CAN, USB, storage, and backlight. Every interface is shown with both sysfs/chardev and library approaches.
+
+**Hub:** [5. Application Development](../Guide.md)
+
+**Scope boundary:** this module is about **runtime access from Linux**. If you need to change **pinmux**, **device tree**, or **custom carrier board wiring**, use:
+
+- [2. Custom Carrier Board Design and Bring-Up](../../02-定制载板设计与启动/Guide.md)
+- [3. L4T Customization](../../03-L4T定制/Guide.md)
+
+---
+
+
+**1. GPIO (Linux)**
+
+Jetson Orin Nano exposes GPIOs through the **gpiochip** character device interface (`/dev/gpiochipN`). The legacy sysfs interface (`/sys/class/gpio/`) is deprecated — use `libgpiod` instead.
+
+**libgpiod tools**
+
+```bash
+# List all GPIO chips
+gpiodetect
+
+# Show all lines on a chip
+gpioinfo gpiochip0
+
+# Read a GPIO input from a real line offset
+gpioget gpiochip0 43
+
+# Set a GPIO output high on a real line offset
+gpioset gpiochip0 43=1
+
+# Monitor GPIO events (rising/falling edge) on a real line offset
+gpiomon gpiochip0 43
+```
+
+**What `gpiodetect` means on Jetson**
+
+On a Jetson Orin Nano dev kit you will typically see something like:
+
+```text
+gpiochip0 [tegra234-gpio] (164 lines)
+gpiochip1 [tegra234-gpio-aon] (32 lines)
+```
+
+- `gpiochip0` is the main Tegra234 GPIO controller
+- `gpiochip1` is the **always-on** GPIO controller used for low-power and wake-related signals
+- the number in parentheses is how many line offsets exist on that controller
+
+For most 40-pin header work, you will usually spend your time on `gpiochip0`.
+
+**How to read `gpioinfo`**
+
+`gpioinfo gpiochip0` prints one row per line offset. Example:
+
+```text
+line  35:      "PG.00" "Force Recovery" input active-low [used]
+line  43:      "PH.00"       unused   input  active-high
+line 131:      "PZ.01"  "interrupt"   input  active-high [used]
+```
+
+Read each field like this:
+
+| Field | Meaning |
+|-------|---------|
+| `line 43` | The **chip-relative line offset**. This is the number you pass to `gpioget`, `gpioset`, and `gpiomon`. |
+| `"PH.00"` | The SoC pad or line name exposed by the driver/device tree. |
+| `unused` / `"Force Recovery"` / `"interrupt"` | The current consumer. `unused` means no driver or userspace process owns it right now. |
+| `input` / `output` | Current direction. |
+| `active-high` / `active-low` | Logical polarity. |
+| `[used]` | The line is already requested by the kernel or another process. Do not reuse it casually. |
+
+**Runtime names you actually care about**
+
+For this guide, keep these names separate:
+
+| Name | Example | Use it for |
+|------|---------|------------|
+| Header pin number | `Pin 7` | Physical wiring on the dev kit |
+| Board signal name | `GPIO09` | Board pinout tables and schematics |
+| SoC pad name | `PH.00` | Low-level identity of the signal |
+| `gpiochip` line offset | `43` | `gpioget`, `gpioset`, `gpiomon` |
+
+Short version:
+
+- use **header pin numbers** when wiring
+- use **board signal names** when reading the pinout
+- use **SoC pad names** when reading low-level GPIO or BSP data
+- use **line offsets** when talking to Linux through `libgpiod`
+
+**What names like `PH.00` mean**
+
+Names like `PH.00`, `PG.00`, or `PZ.01` are **SoC pad / GPIO bank names**.
+
+Read `PH.00` as:
+
+- `P` = GPIO naming prefix
+- `H` = bank or port
+- `00` = bit number inside that bank
+
+So `PH.00` is the **SoC-side identity** of the signal. It is not a header pin number and not a Linux line offset.
+
+**Why `gpioget gpiochip0 <line>` failed in your shell**
+
+`<line>` in the docs is a **placeholder**, not something you type literally.
+
+In `bash`, angle brackets mean shell redirection. So:
+
+```bash
+gpioget gpiochip0 <line>
+```
+
+is interpreted as "read stdin from a file named `line`", which is why it fails.
+
+Replace the placeholder with a real line offset from `gpioinfo`, for example:
+
+```bash
+# Read line 43 on gpiochip0
+gpioget gpiochip0 43
+
+# Drive line 43 high
+gpioset gpiochip0 43=1
+
+# Monitor line 43 for edges
+gpiomon gpiochip0 43
+```
+
+Also note:
+
+- `gpioget` is for **reading**
+- `gpioset` is for **driving outputs**
+- `gpioget gpiochip0 <line>=1` is invalid because `gpioget` does not set values
+
+</details>
+
+### Jetson 上的实用工作流
+
+用这套流程来安全地识别一个 GPIO：
+
+```bash
+# 1. See which controllers exist
+gpiodetect
+
+# 2. Inspect the main controller
+gpioinfo gpiochip0
+
+# 3. Pick an UNUSED line only after checking pinmux and board function
+gpioget gpiochip0 43
+```
+
+在用 `gpioset` 驱动一条线之前，确认以下所有条件：
+
+- 该引脚确实被复用为 GPIO
+- 它没有被标记为 `[used]`
+- 它不是 boot、recovery、regulator、wake 或其他板级关键信号
+- 你知道它上面接了什么外部硬件
+
+### 按名称查找线
+
+如果线名称已填充，`gpiofind` 通常比滚动整个列表更容易：
+
+```bash
+gpiofind "PH.00"
+```
+
+它会返回该命名线所属的 chip 与 line offset。
+
+### pinmux 与载板工作的归属
+
+本指南止步于 **runtime Linux 访问**。
+
+如果需要回答这类问题：
+
+- "在定制载板上我该对哪个 SoC pad 布线？"
+- "如何编辑 NVIDIA pinmux 电子表格？"
+- "如何修改设备树或 BSP 默认值？"
+- "为什么我板上这个引脚是 SPI 而不是 GPIO？"
+
+请改看这些更早的模块：
+
+- [2. Custom Carrier Board Design and Bring-Up](../../02-定制载板设计与启动/Guide.md)
+- [3. L4T Customization](../../03-L4T定制/Guide.md)
+
+### C 中的 libgpiod
+
+```c
+#include <gpiod.h>
+
+struct gpiod_chip *chip = gpiod_chip_open("/dev/gpiochip0");
+struct gpiod_line *line = gpiod_chip_get_line(chip, 42);
+
+/* Output */
+gpiod_line_request_output(line, "my-app", 0);
+gpiod_line_set_value(line, 1);
+
+/* Input */
+gpiod_line_request_input(line, "my-app");
+int val = gpiod_line_get_value(line);
+
+gpiod_chip_close(chip);
+```
+
+### Python 中的 libgpiod
+
+```python
+import gpiod
+
+chip = gpiod.Chip('gpiochip0')
+line = chip.get_line(42)
+
+# Output
+line.request(consumer="my-app", type=gpiod.LINE_REQ_DIR_OUT)
+line.set_value(1)
+
+# Input
+line.request(consumer="my-app", type=gpiod.LINE_REQ_DIR_IN)
+val = line.get_value()
+```
+
+### 设备树 GPIO 配置
+
+本模块假设引脚**已针对 GPIO 正确配置**。
+
+- 在 developer kit 上，这通常意味着使用 **Jetson-IO**
+- 在定制载板上，这意味着你的 BSP 中已有正确的 **pinmux** 和**设备树**
+
+参考：
+
+- [2. Custom Carrier Board Design and Bring-Up](../../02-定制载板设计与启动/Guide.md)
+- [3. L4T Customization](../../03-L4T定制/Guide.md)
+
+---
+
+## 2. GPIO 命名 —— 字母数字到数字的赋值
+
+Jetson 同时使用多套 GPIO 命名方案。它们容易混淆，而且**不可互换**。
+
+### 查找映射
+
+```bash
+# Show all lines on the main chip
+gpioinfo gpiochip0
+
+# Show all lines on the always-on chip
+gpioinfo gpiochip1
+
+# Find a line by SoC pad name, if the line has a name
+gpiofind "PH.00"
+
+# Kernel debug view
+sudo cat /sys/kernel/debug/gpio
+```
+
+在 Jetson 上 `gpioinfo | grep -i "GPIO"` 通常不太有用，因为许多线的命名形如 `PA.00`、`PH.00`、`PQ.05`，或带有板级特定标签如 `Force Recovery`，而不是 `GPIO09` 这样的字面字符串。
+
+### 你会看到的四种名称
+
+| 命名风格 | 示例 | 在哪看到 | 含义 |
+|------------|---------|------------------|---------------|
+| 板级/排针标签 | `GPIO09`, `GPIO15`, `GPIO22` | 载板原理图、40-pin 排针表、Jetson 引脚图 | 排针引脚或连接器信号的板级标签 |
+| SoC pad / port.pin | `PH.00`, `PQ.05`, `PZ.01` | `gpioinfo`、pinmux 文档、底层 bring-up 笔记 | Tegra GPIO bank 与位名称 |
+| `gpiochip` line offset | `43`, `105`, `131` | `gpioinfo`, `gpioget`, `gpioset`, `gpiomon` | libgpiod 在单个 chip 内使用的编号 |
+| 遗留 sysfs/全局 GPIO 编号 | `348`, `391` | 较旧的 Jetson 文档、`/sys/class/gpio` 工作流 | 已弃用的编号模型；新代码避免使用 |
+
+### 简略心智模型
+
+在 runtime 时，你通常操作的是：
+
+```text
+gpiochipN + line offset
+```
+
+示例：
+
+```bash
+gpioget gpiochip0 43
+```
+
+这意味着：
+
+- controller：`gpiochip0`
+- 该 controller 上的 line offset：`43`
+
+它**不**意味着：
+
+- 40-pin 排针的 pin 43
+- sysfs GPIO 43
+- 板级标签 `GPIO43`
+
+### 数字不一致时该信任谁
+
+对本 runtime 指南，优先顺序如下：
+
+1. `gpioinfo` 和 `gpiofind`，用于当前 Linux 可见的 line offset
+2. 40-pin 排针表，用于 dev kit 上的物理引脚位置
+3. 板级原理图，用于确定信号身份
+4. 仅在阅读遗留文档时才用旧的 sysfs 编号
+
+如果需要深入了解 **pinmux 电子表格**、**载板布线**或 **BSP 集成**，请跳到：
+
+- [2. Custom Carrier Board Design and Bring-Up](../../02-定制载板设计与启动/Guide.md)
+- [3. L4T Customization](../../03-L4T定制/Guide.md)
+
+---
+
+## 3. PWM（Linux）
+
+Orin Nano 通过 Linux PWM 子系统暴露 PWM 通道。
+
+
+<details>
+<summary>English original</summary>
+
+**Practical workflow on Jetson**
+
+Use this sequence when you are trying to identify a GPIO safely:
+
+```bash
+# 1. See which controllers exist
+gpiodetect
+
+# 2. Inspect the main controller
+gpioinfo gpiochip0
+
+# 3. Pick an UNUSED line only after checking pinmux and board function
+gpioget gpiochip0 43
+```
+
+Before driving a line with `gpioset`, verify all of these:
+
+- the pin is really muxed as GPIO
+- it is not marked `[used]`
+- it is not a boot, recovery, regulator, wake, or other board-critical signal
+- you know what external hardware is attached to it
+
+**Finding a line by name**
+
+If the line names are populated, `gpiofind` is often easier than scrolling through the full list:
+
+```bash
+gpiofind "PH.00"
+```
+
+That returns the owning chip and line offset for that named line.
+
+**Where pinmux and carrier-board work belongs**
+
+This guide stops at **runtime Linux access**.
+
+If you need to answer questions like:
+
+- "Which SoC pad should I route on a custom carrier?"
+- "How do I edit the NVIDIA pinmux spreadsheet?"
+- "How do I change device tree or BSP defaults?"
+- "Why is this pin SPI on my board instead of GPIO?"
+
+use these earlier modules instead:
+
+- [2. Custom Carrier Board Design and Bring-Up](../../02-定制载板设计与启动/Guide.md)
+- [3. L4T Customization](../../03-L4T定制/Guide.md)
+
+**libgpiod in C**
+
+```c
+#include <gpiod.h>
+
+struct gpiod_chip *chip = gpiod_chip_open("/dev/gpiochip0");
+struct gpiod_line *line = gpiod_chip_get_line(chip, 42);
+
+/* Output */
+gpiod_line_request_output(line, "my-app", 0);
+gpiod_line_set_value(line, 1);
+
+/* Input */
+gpiod_line_request_input(line, "my-app");
+int val = gpiod_line_get_value(line);
+
+gpiod_chip_close(chip);
+```
+
+**libgpiod in Python**
+
+```python
+import gpiod
+
+chip = gpiod.Chip('gpiochip0')
+line = chip.get_line(42)
+
+# Output
+line.request(consumer="my-app", type=gpiod.LINE_REQ_DIR_OUT)
+line.set_value(1)
+
+# Input
+line.request(consumer="my-app", type=gpiod.LINE_REQ_DIR_IN)
+val = line.get_value()
+```
+
+**Device tree GPIO configuration**
+
+This module assumes the pin is **already configured correctly** for GPIO use.
+
+- On the developer kit, that often means using **Jetson-IO**
+- On a custom carrier, that means the right **pinmux** and **device tree** are already in your BSP
+
+References:
+
+- [2. Custom Carrier Board Design and Bring-Up](../../02-定制载板设计与启动/Guide.md)
+- [3. L4T Customization](../../03-L4T定制/Guide.md)
+
+---
+
+**2. GPIO naming — alphanumeric to numeric assignment**
+
+Jetson uses several GPIO naming schemes at once. They are easy to confuse, and they are **not interchangeable**.
+
+**Finding the mapping**
+
+```bash
+# Show all lines on the main chip
+gpioinfo gpiochip0
+
+# Show all lines on the always-on chip
+gpioinfo gpiochip1
+
+# Find a line by SoC pad name, if the line has a name
+gpiofind "PH.00"
+
+# Kernel debug view
+sudo cat /sys/kernel/debug/gpio
+```
+
+`gpioinfo | grep -i "GPIO"` is often not very useful on Jetson, because many lines are named like `PA.00`, `PH.00`, `PQ.05`, or have board-specific labels such as `Force Recovery`, not literal strings like `GPIO09`.
+
+**The four names you will see**
+
+| Name style | Example | Where you see it | What it means |
+|------------|---------|------------------|---------------|
+| Board/header label | `GPIO09`, `GPIO15`, `GPIO22` | Carrier schematics, 40-pin header tables, Jetson pinout diagrams | A board-facing label for a header pin or connector signal |
+| SoC pad / port.pin | `PH.00`, `PQ.05`, `PZ.01` | `gpioinfo`, pinmux docs, low-level bring-up notes | The Tegra GPIO bank and bit name |
+| `gpiochip` line offset | `43`, `105`, `131` | `gpioinfo`, `gpioget`, `gpioset`, `gpiomon` | The number libgpiod uses inside one chip |
+| Legacy sysfs/global GPIO number | `348`, `391` | Older Jetson docs, `/sys/class/gpio` workflows | Deprecated numbering model; avoid for new code |
+
+**Short mental model**
+
+At runtime, the one you usually act on is:
+
+```text
+gpiochipN + line offset
+```
+
+Example:
+
+```bash
+gpioget gpiochip0 43
+```
+
+That means:
+
+- controller: `gpiochip0`
+- line offset on that controller: `43`
+
+It does **not** mean:
+
+- 40-pin header pin 43
+- sysfs GPIO 43
+- board label `GPIO43`
+
+**What to trust when numbers disagree**
+
+For this runtime guide, prefer this order:
+
+1. `gpioinfo` and `gpiofind` for the current Linux-visible line offsets
+2. 40-pin header tables for physical pin location on the dev kit
+3. board schematic for signal identity
+4. old sysfs numbers only when reading legacy documentation
+
+If you need to go deeper into **pinmux spreadsheet**, **carrier routing**, or **BSP integration**, jump to:
+
+- [2. Custom Carrier Board Design and Bring-Up](../../02-定制载板设计与启动/Guide.md)
+- [3. L4T Customization](../../03-L4T定制/Guide.md)
+
+---
+
+**3. PWM (Linux)**
+
+Orin Nano exposes PWM channels via the Linux PWM subsystem.
+
+</details>
+
+### sysfs 接口
+
+```bash
+# Export PWM channel (chip 0, channel 0)
+echo 0 > /sys/class/pwm/pwmchip0/export
+
+# Configure: 1 kHz, 50% duty cycle
+echo 1000000 > /sys/class/pwm/pwmchip0/pwm0/period      # ns
+echo 500000  > /sys/class/pwm/pwmchip0/pwm0/duty_cycle   # ns
+echo 1       > /sys/class/pwm/pwmchip0/pwm0/enable
+```
+
+### Jetson 上的常见用途
+
+| 用例 | PWM 通道 | 备注 |
+|----------|------------|-------|
+| **风扇控制** | 专用风扇 PWM | 由 `jetson_clocks` 或设备树 `pwm-fan` 节点控制 |
+| **LED 亮度** | 支持 GPIO 的 PWM 引脚 | 需将 pinmux 设为 PWM 功能 |
+| **伺服电机** | 支持 GPIO 的 PWM 引脚 | 50 Hz，1–2 ms 脉宽 |
+| **背光** | 显示背光 PWM | 见 [Backlight](#13-backlight-linux) |
+
+---
+
+## 4. ADC（Linux）
+
+Jetson Orin Nano SoM 的 **ADC** 能力**有限**——载板连接器上未引出通用 ADC 引脚。对于模拟量采集：
+
+### 外部 ADC 选项
+
+| ADC | 接口 | 分辨率 | 通道数 | 常见用途 |
+|-----|-----------|-----------|----------|-----------|
+| **ADS1115** | I2C | 16-bit | 4 | 电压、电流、温度传感器 |
+| **MCP3008** | SPI | 10-bit | 8 | 通用模拟输入 |
+| **INA226** | I2C | 16-bit | 2（V + I）| 电源监控 |
+
+### 通过 IIO 子系统读取外部 ADC
+
+如果外部 ADC 有 Linux IIO 驱动：
+
+```bash
+# List IIO devices
+ls /sys/bus/iio/devices/
+
+# Read raw value
+cat /sys/bus/iio/devices/iio:device0/in_voltage0_raw
+
+# Read scale
+cat /sys/bus/iio/devices/iio:device0/in_voltage0_scale
+```
+
+Voltage = raw * scale（单位毫伏）。
+
+---
+
+## 5. UART（Linux）
+
+Orin Nano 引出多个 UART 端口。调试控制台使用 `ttyTCU0`（Tegra Combined UART）。应用 UART 以 `/dev/ttyTHS*` 形式出现。
+
+### 可用 UART
+
+| 设备 | 用途 | 波特率 |
+|--------|-----|-----------|
+| `/dev/ttyTCU0` | 调试控制台（bootloader + kernel）| 115200 |
+| `/dev/ttyTHS0` | 应用 UART 0 | 可配置 |
+| `/dev/ttyTHS1` | 应用 UART 1 | 可配置 |
+
+### 从用户空间使用 UART
+
+```bash
+# Quick test with minicom
+minicom -D /dev/ttyTHS0 -b 115200
+
+# Or with stty + cat
+stty -F /dev/ttyTHS0 115200 cs8 -cstopb -parenb
+echo "hello" > /dev/ttyTHS0
+cat /dev/ttyTHS0
+```
+
+### Python（pyserial）
+
+```python
+import serial
+
+ser = serial.Serial('/dev/ttyTHS0', 115200, timeout=1)
+ser.write(b'hello\n')
+data = ser.readline()
+ser.close()
+```
+
+---
+
+## 6. SPI（Linux）
+
+SPI 总线以 `/dev/spidevX.Y` 形式出现（总线 X，片选 Y）。
+
+### 在设备树中启用 SPI
+
+本模块假定 SPI 已启用。
+
+- 在开发套件上，使用 **Jetson-IO**
+- 在自定义载板上，使用 BSP 中的 **pinmux + device tree** 配置
+
+参考资料：
+
+- [2. Custom Carrier Board Design and Bring-Up](../../02-定制载板设计与启动/Guide.md)
+- [3. L4T Customization](../../03-L4T定制/Guide.md)
+
+### spidev 测试
+
+```bash
+# Loopback test (connect MOSI to MISO)
+spidev_test -D /dev/spidev0.0 -s 1000000 -v
+```
+
+### Python（spidev）
+
+```python
+import spidev
+
+spi = spidev.SpiDev()
+spi.open(0, 0)           # bus 0, CS 0
+spi.max_speed_hz = 1000000
+response = spi.xfer2([0x01, 0x02, 0x03])
+spi.close()
+```
+
+---
+
+## 7. I2C（Linux）
+
+I2C 总线以 `/dev/i2c-N` 形式出现。
+
+### 扫描设备
+
+```bash
+# Scan all addresses on bus 1
+sudo i2cdetect -y -r 1
+```
+
+### 读写寄存器
+
+```bash
+# Read register 0x00 from device 0x50 on bus 1
+sudo i2cget -y 1 0x50 0x00
+
+# Write 0xFF to register 0x01
+sudo i2cset -y 1 0x50 0x01 0xFF
+```
+
+### Python（smbus2）
+
+```python
+from smbus2 import SMBus
+
+with SMBus(1) as bus:
+    data = bus.read_byte_data(0x50, 0x00)
+    bus.write_byte_data(0x50, 0x01, 0xFF)
+```
+
+### Jetson 载板上常见的 I2C 设备
+
+| 设备 | 地址 | 用途 |
+|--------|---------|---------|
+| **EEPROM**（载板 ID）| 0x50–0x57 | 板卡识别 |
+| **INA3221** | 0x40–0x43 | 电源监控（VIN、3.3V、5V）|
+| **IMU**（BMI088、ICM-42688）| 0x68–0x69 | 惯性测量（机器人）|
+| **RTC**（DS3231）| 0x68 | 实时时钟（电池后备）|
+
+---
+
+## 8. CAN（Linux）
+
+Jetson 上的 CAN 总线需要在载板上外接 CAN 收发器（SoC 具有 CAN 控制器，但没有集成 PHY）。
+
+### 配置
+
+```bash
+# Configure CAN interface (500 kbps)
+sudo ip link set can0 type can bitrate 500000
+sudo ip link set can0 up
+
+# For CAN-FD
+sudo ip link set can0 type can bitrate 500000 dbitrate 2000000 fd on
+sudo ip link set can0 up
+```
+
+### 发送与接收
+
+```bash
+# Send a frame
+cansend can0 123#DEADBEEF
+
+# Receive (dump all frames)
+candump can0
+
+# Generate test traffic
+cangen can0
+```
+
+### Python（python-can）
+
+```python
+import can
+
+bus = can.interface.Bus(channel='can0', interface='socketcan')
+
+# Send
+msg = can.Message(arbitration_id=0x123, data=[0xDE, 0xAD, 0xBE, 0xEF])
+bus.send(msg)
+
+# Receive
+msg = bus.recv(timeout=1.0)
+print(f"ID: {msg.arbitration_id:#x}, Data: {msg.data.hex()}")
+```
+
+---
+
+
+<details>
+<summary>English original</summary>
+
+**sysfs interface**
+
+```bash
+# Export PWM channel (chip 0, channel 0)
+echo 0 > /sys/class/pwm/pwmchip0/export
+
+# Configure: 1 kHz, 50% duty cycle
+echo 1000000 > /sys/class/pwm/pwmchip0/pwm0/period      # ns
+echo 500000  > /sys/class/pwm/pwmchip0/pwm0/duty_cycle   # ns
+echo 1       > /sys/class/pwm/pwmchip0/pwm0/enable
+```
+
+**Common uses on Jetson**
+
+| Use case | PWM channel | Notes |
+|----------|------------|-------|
+| **Fan control** | Dedicated fan PWM | Controlled by `jetson_clocks` or device tree `pwm-fan` node |
+| **LED brightness** | GPIO-capable PWM pin | Requires pinmux set to PWM function |
+| **Servo motor** | GPIO-capable PWM pin | 50 Hz, 1–2 ms pulse width |
+| **Backlight** | Display backlight PWM | See [Backlight](#13-backlight-linux) |
+
+---
+
+**4. ADC (Linux)**
+
+The Jetson Orin Nano SoM has **limited ADC** capability — no general-purpose ADC pins are exposed on the carrier connector. For analog sensing:
+
+**External ADC options**
+
+| ADC | Interface | Resolution | Channels | Common use |
+|-----|-----------|-----------|----------|-----------|
+| **ADS1115** | I2C | 16-bit | 4 | Voltage, current, temperature sensors |
+| **MCP3008** | SPI | 10-bit | 8 | General-purpose analog input |
+| **INA226** | I2C | 16-bit | 2 (V + I) | Power monitoring |
+
+**Reading external ADC via IIO subsystem**
+
+If your external ADC has a Linux IIO driver:
+
+```bash
+# List IIO devices
+ls /sys/bus/iio/devices/
+
+# Read raw value
+cat /sys/bus/iio/devices/iio:device0/in_voltage0_raw
+
+# Read scale
+cat /sys/bus/iio/devices/iio:device0/in_voltage0_scale
+```
+
+Voltage = raw * scale (in millivolts).
+
+---
+
+**5. UART (Linux)**
+
+Orin Nano exposes multiple UART ports. The debug console uses `ttyTCU0` (Tegra Combined UART). Application UARTs appear as `/dev/ttyTHS*`.
+
+**Available UARTs**
+
+| Device | Use | Baud rate |
+|--------|-----|-----------|
+| `/dev/ttyTCU0` | Debug console (bootloader + kernel) | 115200 |
+| `/dev/ttyTHS0` | Application UART 0 | Configurable |
+| `/dev/ttyTHS1` | Application UART 1 | Configurable |
+
+**Using UART from userspace**
+
+```bash
+# Quick test with minicom
+minicom -D /dev/ttyTHS0 -b 115200
+
+# Or with stty + cat
+stty -F /dev/ttyTHS0 115200 cs8 -cstopb -parenb
+echo "hello" > /dev/ttyTHS0
+cat /dev/ttyTHS0
+```
+
+**Python (pyserial)**
+
+```python
+import serial
+
+ser = serial.Serial('/dev/ttyTHS0', 115200, timeout=1)
+ser.write(b'hello\n')
+data = ser.readline()
+ser.close()
+```
+
+---
+
+**6. SPI (Linux)**
+
+SPI buses appear as `/dev/spidevX.Y` (bus X, chip-select Y).
+
+**Enable SPI in device tree**
+
+This module assumes SPI is already enabled.
+
+- On the developer kit, use **Jetson-IO**
+- On a custom carrier, use your **pinmux + device tree** configuration in the BSP
+
+References:
+
+- [2. Custom Carrier Board Design and Bring-Up](../../02-定制载板设计与启动/Guide.md)
+- [3. L4T Customization](../../03-L4T定制/Guide.md)
+
+**spidev test**
+
+```bash
+# Loopback test (connect MOSI to MISO)
+spidev_test -D /dev/spidev0.0 -s 1000000 -v
+```
+
+**Python (spidev)**
+
+```python
+import spidev
+
+spi = spidev.SpiDev()
+spi.open(0, 0)           # bus 0, CS 0
+spi.max_speed_hz = 1000000
+response = spi.xfer2([0x01, 0x02, 0x03])
+spi.close()
+```
+
+---
+
+**7. I2C (Linux)**
+
+I2C buses appear as `/dev/i2c-N`.
+
+**Scanning for devices**
+
+```bash
+# Scan all addresses on bus 1
+sudo i2cdetect -y -r 1
+```
+
+**Reading/writing registers**
+
+```bash
+# Read register 0x00 from device 0x50 on bus 1
+sudo i2cget -y 1 0x50 0x00
+
+# Write 0xFF to register 0x01
+sudo i2cset -y 1 0x50 0x01 0xFF
+```
+
+**Python (smbus2)**
+
+```python
+from smbus2 import SMBus
+
+with SMBus(1) as bus:
+    data = bus.read_byte_data(0x50, 0x00)
+    bus.write_byte_data(0x50, 0x01, 0xFF)
+```
+
+**Common I2C devices on Jetson carriers**
+
+| Device | Address | Purpose |
+|--------|---------|---------|
+| **EEPROM** (carrier ID) | 0x50–0x57 | Board identification |
+| **INA3221** | 0x40–0x43 | Power monitoring (VIN, 3.3V, 5V) |
+| **IMU** (BMI088, ICM-42688) | 0x68–0x69 | Inertial measurement (robotics) |
+| **RTC** (DS3231) | 0x68 | Real-time clock (battery-backed) |
+
+---
+
+**8. CAN (Linux)**
+
+CAN bus on Jetson requires an external CAN transceiver on the carrier board (the SoC has CAN controllers but no integrated PHY).
+
+**Setup**
+
+```bash
+# Configure CAN interface (500 kbps)
+sudo ip link set can0 type can bitrate 500000
+sudo ip link set can0 up
+
+# For CAN-FD
+sudo ip link set can0 type can bitrate 500000 dbitrate 2000000 fd on
+sudo ip link set can0 up
+```
+
+**Send and receive**
+
+```bash
+# Send a frame
+cansend can0 123#DEADBEEF
+
+# Receive (dump all frames)
+candump can0
+
+# Generate test traffic
+cangen can0
+```
+
+**Python (python-can)**
+
+```python
+import can
+
+bus = can.interface.Bus(channel='can0', interface='socketcan')
+
+# Send
+msg = can.Message(arbitration_id=0x123, data=[0xDE, 0xAD, 0xBE, 0xEF])
+bus.send(msg)
+
+# Receive
+msg = bus.recv(timeout=1.0)
+print(f"ID: {msg.arbitration_id:#x}, Data: {msg.data.hex()}")
+```
+
+---
+
+</details>
+
+## 9. USB host 模式（Linux）
+
+Jetson Orin Nano 支持 USB 3.2 Gen 2（10 Gbps）与 USB 2.0 host 端口。
+
+### 枚举
+
+```bash
+# List connected USB devices
+lsusb
+
+# Show USB tree with speeds
+lsusb -t
+
+# Detailed device info
+lsusb -v -d <vendor>:<product>
+```
+
+### 常见 USB 外设
+
+| 设备类型 | 驱动 | 备注 |
+|------------|--------|-------|
+| **USB 摄像头** | UVC（`uvcvideo`） | 开箱即用，参见 [Multimedia](../04-多媒体/Guide.md) |
+| **USB 串口**（FTDI、CP210x） | `ftdi_sio`、`cp210x` | 显示为 `/dev/ttyUSB*` |
+| **USB 以太网** | `cdc_ether`、`r8152` | 显示为 `eth*` 或 `usb*` |
+| **USB 存储** | `usb-storage` | 显示为 `/dev/sd*` |
+| **USB 音频** | `snd-usb-audio` | ALSA 设备 |
+
+---
+
+## 10. USB device 模式（Linux）
+
+Orin Nano 开发套件的 USB-C 端口支持 device（gadget）模式，可用于烧录与开发。
+
+### USB gadget 框架
+
+```bash
+# Load the USB gadget configfs
+modprobe libcomposite
+
+# Common gadgets:
+# - g_ether: USB Ethernet gadget (device appears as network adapter on host)
+# - g_serial: USB serial gadget (device appears as ttyACM on host)
+# - g_mass_storage: USB mass storage gadget
+```
+
+### 典型用例
+
+| Gadget | 用例 |
+|--------|----------|
+| **以太网（RNDIS/ECM）** | 无需网线，通过 USB SSH 登录 Jetson |
+| **串口（ACM）** | 通过 USB 提供调试控制台 |
+| **大容量存储** | 将分区或文件暴露为 USB 驱动器 |
+
+---
+
+## 11. NVMe / PCIe 存储（Linux）
+
+多数 Jetson Orin Nano 部署使用 NVMe SSD 作为根文件系统（比 SD 卡更快、更可靠）。
+
+### NVMe 操作
+
+```bash
+# List NVMe devices
+nvme list
+
+# Check health
+sudo nvme smart-log /dev/nvme0
+
+# Benchmark
+sudo fio --name=test --rw=randread --bs=4k --numjobs=4 \
+    --size=1G --runtime=30 --time_based --filename=/dev/nvme0n1
+
+# Check PCIe link speed
+sudo lspci -vv | grep -A 20 "Non-Volatile"
+```
+
+### PCIe 链路验证
+
+```bash
+# Should show Gen3 x4 or Gen4 x4 depending on module
+sudo lspci -vv | grep "LnkSta:"
+```
+
+若链路训练速率低于预期，检查 trace 布线（参见 [Module 2 — Carrier Board](../../02-定制载板设计与启动/Guide.md)）。
+
+---
+
+## 12. SD/MMC 卡（Linux）
+
+SD 卡槽（若载板上具备）显示为 `/dev/mmcblk*`。
+
+```bash
+# Check SD card info
+sudo fdisk -l /dev/mmcblk1
+
+# Mount
+sudo mount /dev/mmcblk1p1 /mnt
+
+# Check speed class
+cat /sys/block/mmcblk1/device/speed_class
+```
+
+**量产提示：** SD 卡写入耐久性有限。根文件系统请使用 NVMe；SD 仅保留给可选的数据记录或现场更新。
+
+---
+
+## 13. 背光（Linux）
+
+若载板上带有 PWM 控制背光的 LCD：
+
+```bash
+# List backlight devices
+ls /sys/class/backlight/
+
+# Get current brightness
+cat /sys/class/backlight/<device>/brightness
+
+# Get max brightness
+cat /sys/class/backlight/<device>/max_brightness
+
+# Set brightness (0 = off, max = full)
+echo 128 > /sys/class/backlight/<device>/brightness
+```
+
+在设备树中为显示面板配置背光 PWM 通道。
+
+关于自定义面板时序、PWM 布线与 BSP 集成，参见：
+
+- [2. 自定义载板设计与 Bring-Up](../../02-定制载板设计与启动/Guide.md)
+- [3. L4T 定制](../../03-L4T定制/Guide.md)
+
+---
+
+## 14. 项目
+
+- **传感器仪表盘：** 读取 I2C 温度传感器（如 TMP102）与 SPI ADC（如用于模拟输入的 MCP3008），以 1 Hz 在 UART 终端上显示数值。
+- **CAN 总线监视器：** 构建 CAN 总线嗅探器，把所有帧连同时间戳记录到文件。增加按仲裁 ID 过滤。
+- **GPIO 中断计数器：** 使用 `gpiomon` 或 libgpiod 事件监视来统计输入引脚上的上升沿。测量最大事件速率。
+- **USB gadget 网络：** 把 Jetson 配置为 USB 以太网 gadget，使宿主机笔记本可通过单根 USB-C 线缆 SSH 登录。
+
+---
+
+## 15. 资源
+
+| 资源 | 说明 |
+|----------|-------------|
+| **Jetson Orin Nano Developer Kit 用户指南** | 排针引脚映射、UART/SPI/I2C 总线分配 |
+| **libgpiod 文档** | 字符设备 GPIO API（替代 sysfs） |
+| **Linux 内核 SPI/I2C 文档** | kernel 源码中的 `Documentation/spi/` 与 `Documentation/i2c/` |
+| **SocketCAN 文档** | Linux CAN 子系统、`ip link`、`candump`、`cansend` |
+| **NVMe CLI** | 用于 NVMe 管理与诊断的 `nvme-cli` 包 |
+| [2. 自定义载板](../../02-定制载板设计与启动/Guide.md) | 连接器布线、电气设计、引脚复用规划 |
+| [3. L4T 定制](../../03-L4T定制/Guide.md) | 设备树、BSP 集成、烧录与量产镜像工作流 |
+
+
+<details>
+<summary>English original</summary>
+
+**9. USB host mode (Linux)**
+
+Jetson Orin Nano supports USB 3.2 Gen 2 (10 Gbps) and USB 2.0 host ports.
+
+**Enumeration**
+
+```bash
+# List connected USB devices
+lsusb
+
+# Show USB tree with speeds
+lsusb -t
+
+# Detailed device info
+lsusb -v -d <vendor>:<product>
+```
+
+**Common USB peripherals**
+
+| Device type | Driver | Notes |
+|------------|--------|-------|
+| **USB camera** | UVC (`uvcvideo`) | Works out of the box, see [Multimedia](../04-多媒体/Guide.md) |
+| **USB serial** (FTDI, CP210x) | `ftdi_sio`, `cp210x` | Appears as `/dev/ttyUSB*` |
+| **USB Ethernet** | `cdc_ether`, `r8152` | Appears as `eth*` or `usb*` |
+| **USB storage** | `usb-storage` | Appears as `/dev/sd*` |
+| **USB audio** | `snd-usb-audio` | ALSA device |
+
+---
+
+**10. USB device mode (Linux)**
+
+The Orin Nano dev kit's USB-C port supports device (gadget) mode for flashing and development.
+
+**USB gadget framework**
+
+```bash
+# Load the USB gadget configfs
+modprobe libcomposite
+
+# Common gadgets:
+# - g_ether: USB Ethernet gadget (device appears as network adapter on host)
+# - g_serial: USB serial gadget (device appears as ttyACM on host)
+# - g_mass_storage: USB mass storage gadget
+```
+
+**Typical use cases**
+
+| Gadget | Use case |
+|--------|----------|
+| **Ethernet (RNDIS/ECM)** | SSH into Jetson over USB without network cable |
+| **Serial (ACM)** | Debug console over USB |
+| **Mass storage** | Expose a partition or file as USB drive |
+
+---
+
+**11. NVMe / PCIe storage (Linux)**
+
+Most Jetson Orin Nano deployments use NVMe SSD for the root filesystem (faster and more reliable than SD card).
+
+**NVMe operations**
+
+```bash
+# List NVMe devices
+nvme list
+
+# Check health
+sudo nvme smart-log /dev/nvme0
+
+# Benchmark
+sudo fio --name=test --rw=randread --bs=4k --numjobs=4 \
+    --size=1G --runtime=30 --time_based --filename=/dev/nvme0n1
+
+# Check PCIe link speed
+sudo lspci -vv | grep -A 20 "Non-Volatile"
+```
+
+**PCIe link verification**
+
+```bash
+# Should show Gen3 x4 or Gen4 x4 depending on module
+sudo lspci -vv | grep "LnkSta:"
+```
+
+If the link trains at a lower speed than expected, check trace routing (see [Module 2 — Carrier Board](../../02-定制载板设计与启动/Guide.md)).
+
+---
+
+**12. SD/MMC card (Linux)**
+
+SD card slot (if present on carrier) appears as `/dev/mmcblk*`.
+
+```bash
+# Check SD card info
+sudo fdisk -l /dev/mmcblk1
+
+# Mount
+sudo mount /dev/mmcblk1p1 /mnt
+
+# Check speed class
+cat /sys/block/mmcblk1/device/speed_class
+```
+
+**Production note:** SD cards have limited write endurance. Use NVMe for root filesystem; reserve SD for optional data logging or field updates only.
+
+---
+
+**13. Backlight (Linux)**
+
+If your carrier has an LCD with PWM-controlled backlight:
+
+```bash
+# List backlight devices
+ls /sys/class/backlight/
+
+# Get current brightness
+cat /sys/class/backlight/<device>/brightness
+
+# Get max brightness
+cat /sys/class/backlight/<device>/max_brightness
+
+# Set brightness (0 = off, max = full)
+echo 128 > /sys/class/backlight/<device>/brightness
+```
+
+Configure the backlight PWM channel in the device tree for your display panel.
+
+For custom panel timing, PWM routing, and BSP integration, see:
+
+- [2. Custom Carrier Board Design and Bring-Up](../../02-定制载板设计与启动/Guide.md)
+- [3. L4T Customization](../../03-L4T定制/Guide.md)
+
+---
+
+**14. Projects**
+
+- **Sensor dashboard:** Read an I2C temperature sensor (e.g., TMP102) and a SPI ADC (e.g., MCP3008 for analog input), display values on a UART terminal at 1 Hz.
+- **CAN bus monitor:** Build a CAN bus sniffer that logs all frames to a file with timestamps. Add filtering by arbitration ID.
+- **GPIO interrupt counter:** Use `gpiomon` or libgpiod event monitoring to count rising edges on an input pin. Measure maximum event rate.
+- **USB gadget network:** Configure the Jetson as a USB Ethernet gadget so a host laptop can SSH into it over a single USB-C cable.
+
+---
+
+**15. Resources**
+
+| Resource | Description |
+|----------|-------------|
+| **Jetson Orin Nano Developer Kit User Guide** | Pin header mapping, UART/SPI/I2C bus assignments |
+| **libgpiod documentation** | Character device GPIO API (replaces sysfs) |
+| **Linux kernel SPI/I2C docs** | `Documentation/spi/` and `Documentation/i2c/` in kernel source |
+| **SocketCAN documentation** | Linux CAN subsystem, `ip link`, `candump`, `cansend` |
+| **NVMe CLI** | `nvme-cli` package for NVMe management and diagnostics |
+| [2. Custom Carrier Board](../../02-定制载板设计与启动/Guide.md) | Connector routing, electrical design, pinmux planning |
+| [3. L4T Customization](../../03-L4T定制/Guide.md) | Device tree, BSP integration, flash and production image workflows |
+
+</details>
+
+---
+
+> 原文：[`Phase 4 - Track B - Nvidia Jetson/5. Application Development/1. Peripheral Access/Guide.md`](https://github.com/ai-hpc/ai-hardware-engineer-roadmap/blob/main/Phase%204%20-%20Track%20B%20-%20Nvidia%20Jetson/5.%20Application%20Development/1.%20Peripheral%20Access/Guide.md)（上游仓库 ai-hpc/ai-hardware-engineer-roadmap，MIT License）。本页为中文翻译，术语保留英文原词；与原文不一致时以原文为准。
