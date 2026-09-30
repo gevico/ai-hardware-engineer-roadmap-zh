@@ -1,8 +1,3 @@
----
-title: AI 硬件工程。 从模型到机器。
-description: AI 硬件工程。 从模型到机器。
----
-
 <div class="home-hero">
 <div class="home-hero__copy">
 <p class="home-hero__eyebrow">AI 硬件工程师路线图</p>
